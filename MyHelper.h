@@ -2,36 +2,44 @@
 
 #include "stdafx.h"
 
+//namespace MyHelper
+//{
+#define		HEX2CHR(c)					((0xA <= (c)) ? ((c) + 0x37) : ((c) + 0x30))
+#define		COUNT_OF_ARRAY(a, t)		(sizeof(a)/sizeof(t))
+
 class CMyHelper
 {
 public:
 	CMyHelper();
 	~CMyHelper();
 
-	static int GetRadioValue(CButton* acRadio[], int count);
-	static int GetRadioValue(CWnd* cWnd, int anID[], int count);
+	static int GetRadioValue(CButton* apcRadio[], int cntRadio);
+	static int GetRadioValue(CWnd* pcWnd, int anID[], int cntRadio);
 
 	static int CEditWriteText(CEdit &cEdit, CString &cStrText, BOOL bAppend = TRUE, BOOL bNewLine = TRUE);
 	static int CEditWriteText(CEdit &cEdit, LPCTSTR lpszText, BOOL bAppend = TRUE, BOOL bNewLine = TRUE);
-	static int CEditWriteText(CWnd* cWnd, int nID, CString &cStrText, BOOL bAppend = TRUE, BOOL bNewLine = TRUE);
-	static int CEditWriteText(CWnd* cWnd, int nID, LPCTSTR lpszText, BOOL bAppend = TRUE, BOOL bNewLine = TRUE);
+	static int CEditWriteText(CEdit &cEdit, LPCSTR lpszText, BOOL bAppend = TRUE, BOOL bNewLine = TRUE);
+
+	static int CEditWriteText(CWnd* pcWnd, int nID, CString &cStrText, BOOL bAppend = TRUE, BOOL bNewLine = TRUE);
+	static int CEditWriteText(CWnd* pcWnd, int nID, LPCTSTR lpszText, BOOL bAppend = TRUE, BOOL bNewLine = TRUE);
+	static int CEditWriteText(CWnd* pcWnd, int nID, LPCSTR lpszText, BOOL bAppend = TRUE, BOOL bNewLine = TRUE);
+
 
 private:
 	static int ceditWriteText(CEdit &cEdit, CString &cStrText, BOOL bAppend, BOOL bNewLine);
-	static int ceditWriteText(CWnd* cWnd, int nID, CString &cStrText, BOOL bAppend, BOOL bNewLine);
+	static int ceditWriteText(CWnd* pcWnd, int nID, CString &cStrText, BOOL bAppend, BOOL bNewLine);
 
 public:
 	static int OpenFileDialog(CStringArray &cStrArrPath, BOOL bMulti = FALSE, int nFiles = 99);
-	static CString Debug_ByteStr(void* ptr, int nByteLen);
+	static int MemDump(void* pData, int nByteLen, CString &cStrDump);
+	static int MemDump(void* pData, int nByteLen, char* pszDest, int nDestLen);
 	static int CalcBCC(BYTE* pbyData, int nLen);
-
 
 };
 
 
 CMyHelper::CMyHelper()
 {
-	ASSERT(FALSE);		// new‹ÖŽ~
 }
 
 
@@ -43,7 +51,7 @@ CMyHelper::~CMyHelper()
 //
 //
 //
-int CMyHelper::GetRadioValue(CButton* apcRadio[], int count)
+int CMyHelper::GetRadioValue(CButton* apcRadio[], int cntRadio)
 {
 	int ret = -1;
 
@@ -51,7 +59,7 @@ int CMyHelper::GetRadioValue(CButton* apcRadio[], int count)
 		return -1;
 	}
 
-	for (int i = 0; i < count; i++) {
+	for (int i = 0; i < cntRadio; i++) {
 		if (apcRadio[i] == NULL) {
 			return -1;
 		}
@@ -66,18 +74,18 @@ int CMyHelper::GetRadioValue(CButton* apcRadio[], int count)
 //
 //
 //
-int CMyHelper::GetRadioValue(CWnd* cWnd, int anID[], int count)
+int CMyHelper::GetRadioValue(CWnd* pcWnd, int anID[], int cntRadio)
 {
 	int ret = -1;
 
-	if (cWnd == NULL || anID == NULL) {
+	if (pcWnd == NULL || anID == NULL) {
 		return -1;
 	}
 
 	CButton* pcb;
 
-	for (int i = 0; i < count; i++) {
-		pcb = (CButton*)(cWnd->GetDlgItem(anID[i]));
+	for (int i = 0; i < cntRadio; i++) {
+		pcb = (CButton*)(pcWnd->GetDlgItem(anID[i]));
 		if (pcb == NULL) {
 			return -1;
 		}
@@ -102,27 +110,32 @@ int CMyHelper::CEditWriteText(CEdit &cEdit, LPCTSTR lpszText, BOOL bAppend/*=TRU
 {
 	return ceditWriteText(cEdit, CString(lpszText), bAppend, bNewLine);
 }
-int CMyHelper::CEditWriteText(CWnd* cWnd, int nID, CString &cStrText, BOOL bAppend/*=TRUE*/, BOOL bNewLine/*=TRUE*/)
+int CMyHelper::CEditWriteText(CEdit &cEdit, LPCSTR lpszText, BOOL bAppend/*=TRUE*/, BOOL bNewLine/*=TRUE*/)
 {
-	return ceditWriteText(cWnd, nID, cStrText, bAppend, bNewLine);
+	return ceditWriteText(cEdit, CString(lpszText), bAppend, bNewLine);
 }
-int CMyHelper::CEditWriteText(CWnd* cWnd, int nID, LPCTSTR lpszText, BOOL bAppend/*=TRUE*/, BOOL bNewLine/*=TRUE*/)
+int CMyHelper::CEditWriteText(CWnd* pcWnd, int nID, CString &cStrText, BOOL bAppend/*=TRUE*/, BOOL bNewLine/*=TRUE*/)
 {
-	return ceditWriteText(cWnd, nID, CString(lpszText), bAppend, bNewLine);
+	return ceditWriteText(pcWnd, nID, cStrText, bAppend, bNewLine);
+}
+int CMyHelper::CEditWriteText(CWnd* pcWnd, int nID, LPCTSTR lpszText, BOOL bAppend/*=TRUE*/, BOOL bNewLine/*=TRUE*/)
+{
+	return ceditWriteText(pcWnd, nID, CString(lpszText), bAppend, bNewLine);
+}
+int CMyHelper::CEditWriteText(CWnd* pcWnd, int nID, LPCSTR lpszText, BOOL bAppend/*=TRUE*/, BOOL bNewLine/*=TRUE*/)
+{
+	return ceditWriteText(pcWnd, nID, CString(lpszText), bAppend, bNewLine);
 }
 //
 //
 //
 int CMyHelper::ceditWriteText(CEdit &cEdit, CString &cStrText, BOOL bAppend, BOOL bNewLine)
 {
-	int ret = 0;
-
 	CString cStrWork = _T("");
 
 	if (bAppend) {
 		cEdit.GetWindowText(cStrWork);
 	}
-
 	if (bNewLine) {
 		cStrWork += (cStrText + _T("\r\n"));
 	}
@@ -131,31 +144,27 @@ int CMyHelper::ceditWriteText(CEdit &cEdit, CString &cStrText, BOOL bAppend, BOO
 	}
 	cEdit.SetWindowText(cStrWork);
 
-	return ret;
+	return 0;
 }
 //
 //
 //
-int CMyHelper::ceditWriteText(CWnd* cWnd, int nID, CString &cStrText, BOOL bAppend, BOOL bNewLine)
+int CMyHelper::ceditWriteText(CWnd* pcWnd, int nID, CString &cStrText, BOOL bAppend, BOOL bNewLine)
 {
-	if (cWnd == NULL) {
+	if (pcWnd == NULL) {
 		return -1;
 	}
 
-	int ret = 0;
-
-	CEdit* pcEdit = (CEdit*)(cWnd->GetDlgItem(nID));
+	CEdit* pcEdit = (CEdit*)(pcWnd->GetDlgItem(nID));
+	CString cStrWork = _T("");
 
 	if (pcEdit == NULL) {
 		return -1;
 	}
 
-	CString cStrWork = _T("");
-
 	if (bAppend) {
 		pcEdit->GetWindowText(cStrWork);
 	}
-
 	if (bNewLine) {
 		cStrWork += (cStrText + _T("\r\n"));
 	}
@@ -164,10 +173,12 @@ int CMyHelper::ceditWriteText(CWnd* cWnd, int nID, CString &cStrText, BOOL bAppe
 	}
 	pcEdit->SetWindowText(cStrWork);
 
-	return ret;
+	return 0;
 }
 
 
+//
+//
 //
 int CMyHelper::OpenFileDialog(CStringArray &cStrArrPath, BOOL bMulti /*=FALSE*/, int nFiles /*=99*/)
 {
@@ -176,91 +187,98 @@ int CMyHelper::OpenFileDialog(CStringArray &cStrArrPath, BOOL bMulti /*=FALSE*/,
 	CString cStrTmp;
 	CString cStrDir;
 
-	TCHAR* pc;
-	TCHAR* pcBuffEnd;
-	TCHAR* pcBuffStart;
+	TCHAR* pchPtr;
+	TCHAR* pchBuffEnd;
+	TCHAR* pchBuffStart;
 
 	CFileDialog cFileDlg(TRUE);
 	OPENFILENAME& stOFN = cFileDlg.GetOFN();
 
-	//TRY
-	//{
-		pc = cStrTmp.GetBuffer(FILE_LIST_BUFFER_SIZE);
-		if (bMulti) {
-			stOFN.Flags |= OFN_ALLOWMULTISELECT;
-		}
-		stOFN.lpstrFile = pc;
-		stOFN.nMaxFile = FILE_LIST_BUFFER_SIZE;
+	pchPtr = cStrTmp.GetBuffer(FILE_LIST_BUFFER_SIZE);
+	if (bMulti) {
+		stOFN.Flags |= OFN_ALLOWMULTISELECT;
+	}
+	stOFN.lpstrFile = pchPtr;
+	stOFN.nMaxFile = FILE_LIST_BUFFER_SIZE;
 
-		cFileDlg.DoModal();
-		cStrTmp.ReleaseBuffer();
+	cFileDlg.DoModal();
+	cStrTmp.ReleaseBuffer();
 
-		pcBuffEnd = pc + FILE_LIST_BUFFER_SIZE - 2;
-		pcBuffStart = pc;
+	pchBuffEnd = pchPtr + FILE_LIST_BUFFER_SIZE - 2;
+	pchBuffStart = pchPtr;
 
-		//TRACE("%s", (LPCTSTR)Debug_ByteStr(pc, FILE_LIST_BUFFER_SIZE - 2));
+	while ((pchPtr < pchBuffEnd) && (*pchPtr)) {
+		pchPtr++;
+	}
+	if (pchPtr > pchBuffStart) {
+		cStrDir.Format(_T("%s"), pchBuffStart);
+		pchPtr++;
 
-		while ((pc < pcBuffEnd) && (*pc)) {
-			pc++;
-		}
-		if (pc > pcBuffStart) {
-			cStrDir.Format(_T("%s"), pcBuffStart);
-			pc++;
+		while ((pchPtr < pchBuffEnd) && (*pchPtr)) {
+			pchBuffStart = pchPtr;
 
-			while ((pc < pcBuffEnd) && (*pc)) {
-				pcBuffStart = pc;
-
-				while ((pc < pcBuffEnd) && (*pc)) {
-					pc++;
-				}
-				if (pc > pcBuffStart) {
-					cStrTmp.Format(_T("%s\\%s"), cStrDir, pcBuffStart);
-					cStrArrPath.Add(cStrTmp);
-				}
-				pc++;
+			while ((pchPtr < pchBuffEnd) && (*pchPtr)) {
+				pchPtr++;
 			}
+			if (pchPtr > pchBuffStart) {
+				cStrTmp.Format(_T("%s\\%s"), cStrDir, pchBuffStart);
+				cStrArrPath.Add(cStrTmp);
+			}
+			pchPtr++;
 		}
+	}
 
-		if (cStrArrPath.GetCount() <= 0 && 0 < cStrDir.GetLength()) {
-			cStrArrPath.Add(cStrDir);
-		}
+	if (cStrArrPath.GetCount() <= 0 && 0 < cStrDir.GetLength()) {
+		cStrArrPath.Add(cStrDir);
+	}
 
-		TRACE("cStrArrPath.GetCount()=%d", cStrArrPath.GetCount());
-	//}
-	//CATCH(CException, pcEx)
-	//{
-	//	pcEx->ReportError();
-	//	return -1;
-	//}
-	//END_CATCH
+	TRACE("cStrArrPath.GetCount()=%d", cStrArrPath.GetCount());
 
 	return cStrArrPath.GetCount();
 }
 
 
-//#define		HEX2CHR(c)		((0xA <= (c)) ? ((c) + 0x37) : ((c) + 0x30))
-
 //
 //
 //
-CString CMyHelper::Debug_ByteStr(void* ptr, int nByteLen)
+int CMyHelper::MemDump(void* pData, int nByteLen, CString &cStrDump)
 {
-	if (ptr == NULL) {
-		return CString("");
+	if (pData == NULL) {
+		return -1;
 	}
 
-	CString cStr = "";
-	BYTE* p = (BYTE*)ptr;
-	//TCHAR buff[] = { 0, 0, 0, 0 };
-	TCHAR buff[4] = {};
+	cStrDump = "";
+	BYTE* p = (BYTE*)pData;
+	char buff[4] = {};
 
 	for (int i = 0; i < nByteLen; i++) {
-		//buff[0] = HEX2CHR((*(p + i) >> 4) & 0xF);
-		//buff[1] = HEX2CHR(*(p + i) & 0xF);
-		snprintf(buff, sizeof(buff), "%02X ", *(p + i));
-		cStr += CString(buff);
+		_snprintf(buff, sizeof(buff), "%02X ", *(p + i));
+		cStrDump += CString(buff);
 	}
-	return cStr;
+	return 0;
+}
+//
+//
+//
+int CMyHelper::MemDump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
+{
+	if (pData == NULL || pszDump == NULL || nDumpLen < (nByteLen * 3 + 1)) {
+		return -1;
+	}
+
+	BYTE* p = (BYTE*)pData;
+	char buff[4] = {};
+	int bp = 0;
+
+	memset(pszDump, 0, nDumpLen);
+
+	for (int i = 0; i < nByteLen && bp < nDumpLen - 3; i++) {
+		_snprintf(buff, sizeof(buff), "%02X ", *(p + i));
+		strncpy(pszDump + bp, buff, strlen(buff));
+		bp += strlen(buff);
+	}
+
+	return 0;
 }
 
 
@@ -270,7 +288,7 @@ CString CMyHelper::Debug_ByteStr(void* ptr, int nByteLen)
 int CMyHelper::CalcBCC(BYTE* pbyData, int nLen)
 {
 	if (pbyData == NULL) {
-		return 0;
+		return -1;
 	}
 
 	BYTE by = 0;
@@ -279,3 +297,30 @@ int CMyHelper::CalcBCC(BYTE* pbyData, int nLen)
 	}
 	return by;
 }
+
+
+//LONGLONG ll = 0x1234567890ABCDEF;
+//
+//CString cs0, csOut;
+//
+//if (CMyHelper::MemDump(&ll, sizeof(LONGLONG), cs0) < 0) {
+//	CMyHelper::CEditWriteText(this, IDC_EDIT1, _T("GetDumpStr failed 1."));
+//}
+//else {
+//	CMyHelper::CEditWriteText(this, IDC_EDIT1, cs0);
+//}
+//
+//char achDump[25];
+//
+//cs0.Format(_T("sizeof(a)=%d, sizeof(t)=%d, COUNT_OF_ARRAY=%d")
+//	, sizeof(achDump), sizeof(char), COUNT_OF_ARRAY(achDump, char));
+//CMyHelper::CEditWriteText(this, IDC_EDIT1, cs0);
+//
+//if (CMyHelper::MemDump(&ll, sizeof(LONGLONG), achDump, COUNT_OF_ARRAY(achDump, char)) < 0) {
+//	CMyHelper::CEditWriteText(this, IDC_EDIT1, _T("GetDumpStr failed 2."));
+//}
+//else {
+//	CMyHelper::CEditWriteText(this, IDC_EDIT1, CString(achDump));
+//}
+
+//}
