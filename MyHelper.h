@@ -24,7 +24,6 @@ public:
 	static int CEditWriteText(CWnd* pcWnd, int nID, LPCTSTR lpszText, BOOL bAppend = TRUE, BOOL bNewLine = TRUE);
 	static int CEditWriteText(CWnd* pcWnd, int nID, LPCSTR lpszText, BOOL bAppend = TRUE, BOOL bNewLine = TRUE);
 
-
 private:
 	static int ceditWriteText(CEdit &cEdit, CString &cStrText, BOOL bAppend, BOOL bNewLine);
 	static int ceditWriteText(CWnd* pcWnd, int nID, CString &cStrText, BOOL bAppend, BOOL bNewLine);
@@ -279,23 +278,6 @@ int CMyHelper::MemDump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 	}
 
 	return 0;
-}
-
-
-//
-//
-//
-int CMyHelper::CalcBCC(BYTE* pbyData, int nLen)
-{
-	if (pbyData == NULL) {
-		return -1;
-	}
-
-	BYTE by = 0;
-	for (int i = 0; i < nLen; i++) {
-		by ^= *(pbyData + i);
-	}
-	return by;
 }
 
 

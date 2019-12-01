@@ -203,6 +203,7 @@ LONG CIniFile::ReadInt(LPCTSTR lpszSection, LPCTSTR lpszKey, INT nDefault)
 		return nDefault;
 	}
 
+	errno = 0;
 	lRet = _tcstol(szBuff, endptr, 10);
 	if (endptr != NULL || errno == ERANGE) {
 		return nDefault;
@@ -231,7 +232,12 @@ UINT CIniFile::ReadHex(LPCTSTR lpszSection, LPCTSTR lpszKey, UINT uiDefault)
 		return uiDefault;
 	}
 
-	uiRet = _tcstoul(szBuff, endptr, 16);
+	if (_tcslen(szBuff) < 3 || szBuff[0] != '0' || szBuff[1] != 'x') {
+		return 0;		// 16iÚ“ªŽ«‚Å‚Í‚È‚¢
+	}
+
+	errno = 0;
+	uiRet = _tcstoul(&szBuff[2], endptr, 16);
 	if (endptr != NULL || errno == ERANGE) {
 		return uiDefault;
 	}
@@ -261,6 +267,7 @@ DOUBLE CIniFile::ReadDouble(LPCTSTR lpszSection, LPCTSTR lpszKey, DOUBLE dDefaul
 		return dDefault;
 	}
 
+	errno = 0;
 	dRet = _tcstod(szBuff, endptr);
 	if (endptr != NULL || errno == ERANGE) {
 		return dDefault;
@@ -299,7 +306,7 @@ BOOL CIniFile::WriteHex(LPCTSTR lpszSection, LPCTSTR lpszKey, UINT uiVal)
 	TCHAR szBuff[INI_KEY_BUFF_SIZE];
 
 	memset(szBuff, 0, sizeof(szBuff));
-	_sntprintf(szBuff, INI_KEY_BUFF_SIZE, _T("%X"), uiVal);
+	_sntprintf(szBuff, INI_KEY_BUFF_SIZE, _T("0x%X"), uiVal);
 
 	return WriteString(lpszSection, lpszKey, szBuff);
 }
