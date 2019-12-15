@@ -1,6 +1,6 @@
 /**
  * @file	MyHelper.h
- * @brief	ƒƒOo—Í
+ * @brief	GŠÖ”
  * @author	?
  * @date	?
  */
