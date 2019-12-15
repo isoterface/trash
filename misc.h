@@ -57,7 +57,7 @@ int mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
  * @param	[in]	int nDumpLen	: 出力先バッファ領域の大きさ
  * @return	出力先バッファへのポインタ (失敗時は"(NULL)"文字列が返る)
  */
-char*  _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
+const char*  _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 {
 	if (mem_dump(pData, nByteLen, pszDump, nDumpLen) < 0) {
 		return "(NULL)";
@@ -75,7 +75,7 @@ char*  _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
  * @param	[in]	...				: 出力書式パラメータ
  * @return	0:成功, -1:失敗
  */
-int fmt_str(char* szBuff, int n, char* szFmt, ...)
+int fmt_str(char* szBuff, int n, const char* szFmt, ...)
 {
 	if (szBuff == NULL || szFmt == NULL) {
 		return -1;
@@ -100,7 +100,7 @@ int fmt_str(char* szBuff, int n, char* szFmt, ...)
  * @param	[in]	...				: 出力書式パラメータ
  * @return	出力先バッファへのポインタ (失敗時は"(NULL)"文字列が返る)
  */
-char* _fmt_str(char* szBuff, int n, char* szFmt, ...)
+const char* _fmt_str(char* szBuff, int n, const char* szFmt, ...)
 {
 	if (szBuff == NULL || szFmt == NULL) {
 		return "(NULL)";
@@ -130,7 +130,7 @@ char* _fmt_str(char* szBuff, int n, char* szFmt, ...)
  * @return	1～:分割した個数, -1:失敗
  * @remarks	apTokenの各要素はszDestの対応するアドレスを指す, 分割数がnToken以上だと失敗
  */
-int split_str(char* szSrc, char* szDelim, char* szDest, int nDest, char* apToken[], int nToken)
+int split_str(const char* szSrc, char* szDelim, char* szDest, int nDest, char* apToken[], int nToken)
 {
 	if (szSrc == NULL || szDelim == NULL || szDest == NULL || apToken == NULL) {
 		return -1;

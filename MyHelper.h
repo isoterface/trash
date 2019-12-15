@@ -38,7 +38,6 @@ public:
 	static int OpenFileDialog(CStringArray &cStrArrPath, BOOL bMulti = FALSE, int nFiles = 99);
 	static int MemDump(void* pData, int nByteLen, CString &cStrDump);
 	static int MemDump(void* pData, int nByteLen, char* pszDest, int nDestLen);
-	static int CalcBCC(BYTE* pbyData, int nLen);
 
 };
 
