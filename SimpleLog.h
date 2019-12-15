@@ -22,12 +22,12 @@
   * @enum	_LOG_LEVEL
   * @brief	ログレベル定義
   */
-typedef enum LOG_LEVEL {
+typedef enum _LOG_LEVEL {
 	ERR = 1,
 	WAR = 2,
 	INF = 3,
 	DBG = 4
-}_LOG_LEVEL;
+} LOG_LEVEL;
 
 
 /**
@@ -107,7 +107,7 @@ int CLog::Start(int nID, const char* szPath)
 
 	memset(m_szLogPath[id], 0, sizeof(m_szLogPath[id]));
 	strncpy(m_szLogPath[id], szPath, sizeof(m_szLogPath[id]));
-	InitializeCriticalSection(&(m_stCS[id]));
+	::InitializeCriticalSection(&(m_stCS[id]));
 	m_bUsed[id] = TRUE;
 
 	return id;
@@ -141,7 +141,7 @@ int CLog::End(int nID)
 
 	// 指定IDのみ開放
 	if (m_bUsed[nID] == TRUE) {
-		DeleteCriticalSection(&(m_stCS[nID]));
+		::DeleteCriticalSection(&(m_stCS[nID]));
 		m_bUsed[nID] = FALSE;
 	}
 	return 0;
@@ -158,7 +158,7 @@ int CLog::End()
 	// 全ID開放
 	for (int i = 0; i < MAX_ID; i++) {
 		if (m_bUsed[i] == TRUE) {
-			DeleteCriticalSection(&(m_stCS[i]));
+			::DeleteCriticalSection(&(m_stCS[i]));
 			m_bUsed[i] = FALSE;
 		}
 	}
@@ -226,7 +226,7 @@ int CLog::write(int nID, int nLevel, const char* szFmt, va_list arg)
 
 	vsnprintf(szBuff0, sizeof(szBuff0), szFmt, arg);
 
-	EnterCriticalSection(&(m_stCS[nID]));
+	::EnterCriticalSection(&(m_stCS[nID]));
 	errno = 0;
 	FILE *fp = fopen(m_szLogPath[nID], "a+");
 	if (fp == NULL) {
@@ -235,7 +235,7 @@ int CLog::write(int nID, int nLevel, const char* szFmt, va_list arg)
 	}
 
 	SYSTEMTIME stTime;
-	GetLocalTime((LPSYSTEMTIME)&stTime);
+	::GetLocalTime((LPSYSTEMTIME)&stTime);
 	snprintf(szBuff1, sizeof(szBuff1),
 		"%04d/%02d/%02d, %02d:%02d:%02d.%03d, %s, %s\n"
 		, stTime.wYear
@@ -251,10 +251,10 @@ int CLog::write(int nID, int nLevel, const char* szFmt, va_list arg)
 
 	if (fclose(fp) != 0) {
 		if (errno != 0) perror(NULL);
-		LeaveCriticalSection(&(m_stCS[nID]));
+		::LeaveCriticalSection(&(m_stCS[nID]));
 		return -1;
 	}
-	LeaveCriticalSection(&(m_stCS[nID]));
+	::LeaveCriticalSection(&(m_stCS[nID]));
 	return 0;
 }
 

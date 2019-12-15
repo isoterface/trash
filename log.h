@@ -17,7 +17,7 @@
 #define LOG_MAX		(256)
 
 
- //! ログIDごとの排他オブジェクト
+//! ログIDごとの排他オブジェクト
 static CRITICAL_SECTION	g_cs[MAX_ID];
 //! ログファイルパス
 static char				g_szLogPath[MAX_ID][MAX_PATH];

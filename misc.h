@@ -158,6 +158,33 @@ int split_str(const char* szSrc, char* szDelim, char* szDest, int nDest, char* a
 }
 
 
+/**
+ * @fn		str_curr_time
+ * @brief	現在日時の文字列を得る
+ * @param	[OUT]	char* szBuff	: 日時文字列を格納するバッファ領域
+ * @param	[IN]	int nSize		: バッファ領域のサイズ
+ * @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
+ */
+static const char* str_curr_time(char* szBuff, int nSize)
+{
+	if (szBuff == NULL) {
+		return "(NULL)";
+	}
+	SYSTEMTIME stTime;
+	GetLocalTime((LPSYSTEMTIME)&stTime);
+	snprintf(szBuff, nSize,
+		"%04d/%02d/%02d, %02d:%02d:%02d.%03d"
+		, stTime.wYear
+		, stTime.wMonth
+		, stTime.wDay
+		, stTime.wHour
+		, stTime.wMinute
+		, stTime.wSecond
+		, stTime.wMilliseconds);
+	return szBuff;
+}
+
+
 ///**
 // * @fn		curr_time
 // * @brief	
