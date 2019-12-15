@@ -71,19 +71,19 @@ char*  _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
  * @brief	書式と書式パラメータより文字列を作成、出力先バッファに出力
  * @param	[out]	char* szBuff	: 出力先バッファ領域
  * @param	[in]	int n			: 出力先バッファ領域のサイズ
- * @param	[in]	char* szFormat	: 出力書式
+ * @param	[in]	char* szFmt		: 出力書式
  * @param	[in]	...				: 出力書式パラメータ
  * @return	0:成功, -1:失敗
  */
-int fmt_str(char* szBuff, int n, char* szFormat, ...)
+int fmt_str(char* szBuff, int n, char* szFmt, ...)
 {
-	if (szBuff == NULL || szFormat == NULL) {
+	if (szBuff == NULL || szFmt == NULL) {
 		return -1;
 	}
 
 	va_list arg;
-	va_start(arg, szFormat);
-	int ret = vsnprintf(szBuff, n, szFormat, arg);
+	va_start(arg, szFmt);
+	int ret = vsnprintf(szBuff, n, szFmt, arg);
 	va_end(arg);
 
 	if (ret < 0 || n <= ret) {
@@ -96,19 +96,19 @@ int fmt_str(char* szBuff, int n, char* szFormat, ...)
  * @brief	書式と書式パラメータより文字列を作成、出力先バッファに出力
  * @param	[out]	char* szBuff	: 出力先バッファ領域
  * @param	[in]	int n			: 出力先バッファ領域のサイズ
- * @param	[in]	char* szFormat	: 出力書式
+ * @param	[in]	char* szFmt		: 出力書式
  * @param	[in]	...				: 出力書式パラメータ
  * @return	出力先バッファへのポインタ (失敗時は"(NULL)"文字列が返る)
  */
-char* _fmt_str(char* szBuff, int n, char* szFormat, ...)
+char* _fmt_str(char* szBuff, int n, char* szFmt, ...)
 {
-	if (szBuff == NULL || szFormat == NULL) {
+	if (szBuff == NULL || szFmt == NULL) {
 		return "(NULL)";
 	}
 
 	va_list arg;
-	va_start(arg, szFormat);
-	int ret = vsnprintf(szBuff, n, szFormat, arg);
+	va_start(arg, szFmt);
+	int ret = vsnprintf(szBuff, n, szFmt, arg);
 	va_end(arg);
 
 	if (ret < 0 || n <= ret) {
@@ -156,6 +156,24 @@ int split_str(char* szSrc, char* szDelim, char* szDest, int nDest, char* apToken
 
 	return cnt;
 }
+
+
+///**
+// * @fn		curr_time
+// * @brief	
+// * @param	
+// * @return	
+// * @remarks	
+// */
+//int curr_time(struct tm* tm)
+//{
+//	time_t t;
+//	time(&t);
+//	if (localtime_s(tm, &t) != 0) {
+//		return -1;
+//	}
+//	return 0;
+//}
 
 
 int calc_bcc(void* pData, int nByteLen)
