@@ -89,9 +89,10 @@ CLog::CLog()
 
 /**
  * @fn		Start
- * @brief
- * @param	[in]	
- * @return
+ * @brief	指定ログファイルへのログ出力を開始する
+ * @param	[in]	int nID				: ログ出力時の指定ログID(0～MAX_ID, -1でIDを自動で採番)
+ * @param	[in]	const char* szPath	: ログ出力先ファイルパス
+ * @return	0～MAX_ID:成功（以後のログ出力は取得したIDを使用する, -1:失敗
  */
 int CLog::Start(int nID, const char* szPath)
 {
@@ -112,9 +113,9 @@ int CLog::Start(int nID, const char* szPath)
 
 /**
  * @fn		Start
- * @brief
- * @param	[in]	
- * @return
+ * @brief	指定ログファイルへのログ出力を開始する(IDは自動採番)
+ * @param	[in]	const char* szPath	: ログ出力先ファイルパス
+ * @return	0～MAX_ID:成功（以後のログ出力は取得したIDを使用する, -1:失敗
  */
 int CLog::Start(const char* szPath)
 {
