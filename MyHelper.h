@@ -1,3 +1,9 @@
+/**
+ * @file	MyHelper.h
+ * @brief	ÉçÉOèoóÕ
+ * @author	?
+ * @date	?
+ */
 #pragma once
 
 #include "stdafx.h"
@@ -47,9 +53,12 @@ CMyHelper::~CMyHelper()
 }
 
 
-//
-//
-//
+/**
+ * @fn		GetRadioValue
+ * @brief	
+ * @param	[in]	
+ * @return	
+ */
 int CMyHelper::GetRadioValue(CButton* apcRadio[], int cntRadio)
 {
 	int ret = -1;
@@ -70,9 +79,12 @@ int CMyHelper::GetRadioValue(CButton* apcRadio[], int cntRadio)
 
 	return ret;
 }
-//
-//
-//
+/**
+ * @fn		GetRadioValue
+ * @brief
+ * @param	[in]
+ * @return
+ */
 int CMyHelper::GetRadioValue(CWnd* pcWnd, int anID[], int cntRadio)
 {
 	int ret = -1;
@@ -98,9 +110,12 @@ int CMyHelper::GetRadioValue(CWnd* pcWnd, int anID[], int cntRadio)
 }
 
 
-//
-//
-//
+/**
+ * @fn		CEditWriteText
+ * @brief
+ * @param	[in]
+ * @return
+ */
 int CMyHelper::CEditWriteText(CEdit &cEdit, CString &cStrText, BOOL bAppend/*=TRUE*/, BOOL bNewLine/*=TRUE*/)
 {
 	return ceditWriteText(cEdit, cStrText, bAppend, bNewLine);
@@ -125,9 +140,12 @@ int CMyHelper::CEditWriteText(CWnd* pcWnd, int nID, LPCSTR lpszText, BOOL bAppen
 {
 	return ceditWriteText(pcWnd, nID, CString(lpszText), bAppend, bNewLine);
 }
-//
-//
-//
+/**
+ * @fn		ceditWriteText
+ * @brief
+ * @param	[in]
+ * @return
+ */
 int CMyHelper::ceditWriteText(CEdit &cEdit, CString &cStrText, BOOL bAppend, BOOL bNewLine)
 {
 	CString cStrWork = _T("");
@@ -145,9 +163,12 @@ int CMyHelper::ceditWriteText(CEdit &cEdit, CString &cStrText, BOOL bAppend, BOO
 
 	return 0;
 }
-//
-//
-//
+/**
+ * @fn		ceditWriteText
+ * @brief
+ * @param	[in]
+ * @return
+ */
 int CMyHelper::ceditWriteText(CWnd* pcWnd, int nID, CString &cStrText, BOOL bAppend, BOOL bNewLine)
 {
 	if (pcWnd == NULL) {
@@ -176,9 +197,12 @@ int CMyHelper::ceditWriteText(CWnd* pcWnd, int nID, CString &cStrText, BOOL bApp
 }
 
 
-//
-//
-//
+/**
+ * @fn		OpenFileDialog
+ * @brief
+ * @param	[in]
+ * @return
+ */
 int CMyHelper::OpenFileDialog(CStringArray &cStrArrPath, BOOL bMulti /*=FALSE*/, int nFiles /*=99*/)
 {
 	//const int MAX_CFileDialog_FILE_COUNT = 99;
@@ -237,9 +261,12 @@ int CMyHelper::OpenFileDialog(CStringArray &cStrArrPath, BOOL bMulti /*=FALSE*/,
 }
 
 
-//
-//
-//
+/**
+ * @fn		MemDump
+ * @brief
+ * @param	[in]
+ * @return
+ */
 int CMyHelper::MemDump(void* pData, int nByteLen, CString &cStrDump)
 {
 	if (pData == NULL) {
@@ -256,9 +283,12 @@ int CMyHelper::MemDump(void* pData, int nByteLen, CString &cStrDump)
 	}
 	return 0;
 }
-//
-//
-//
+/**
+ * @fn		MemDump
+ * @brief
+ * @param	[in]
+ * @return
+ */
 int CMyHelper::MemDump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 {
 	if (pData == NULL || pszDump == NULL || nDumpLen < (nByteLen * 3 + 1)) {
