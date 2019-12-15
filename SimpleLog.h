@@ -4,6 +4,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <assert.h>
 #include <windows.h>
 
 
@@ -11,13 +12,6 @@
 #define LOG_MAX		(256)
 #define NOT_USED	(0)
 #define USED		(1)
-
-
-static CRITICAL_SECTION	g_cs[MAX_ID];		//! ログIDごとの排他オブジェクト
-static char				g_szLogPath[MAX_ID][MAX_PATH];		//! ログファイルパス
-static int				g_nUseStatus[MAX_ID] = {			//! ログID使用状態
-	NOT_USED, NOT_USED, NOT_USED, NOT_USED, NOT_USED,
-	NOT_USED, NOT_USED, NOT_USED, NOT_USED, NOT_USED };
 
 
 /**
@@ -32,42 +26,67 @@ typedef enum LOG_LEVEL {
 }_LOG_LEVEL;
 
 
+/**
+ * @class	CLog
+ * @brief	ログ出力クラス
+ */
 class CLog
 {
-//private:
-	//static CRITICAL_SECTION	g_cs[MAX_ID];		//! ログIDごとの排他オブジェクト
-	//static char				g_szLogPath[MAX_ID][MAX_PATH];		//! ログファイルパス
-	//static int				g_nUseStatus[MAX_ID] = {			//! ログID使用状態
-	//	NOT_USED, NOT_USED, NOT_USED, NOT_USED, NOT_USED,
-	//	NOT_USED, NOT_USED, NOT_USED, NOT_USED, NOT_USED };
+private:
+	//! スタティックメンバ変数（宣言のみ、実体の確保はcpp側で行う）
+	static CRITICAL_SECTION	m_stCS[MAX_ID];						//! ログIDごとの排他オブジェクト
+	static char				m_szLogPath[MAX_ID][MAX_PATH];		//! ログファイルパス
+	static int				m_nUseStatus[MAX_ID];				//! ログID使用状態
 
 public:
 	CLog();
-	~CLog();
+	//~CLog();
 
-	static int Start(int nID, const char* szPath);
-	static int Start(const char* szPath);
-	static int End(int nID);
-	static int End();
-	static int Write(int nID, int nLevel, const char* szFmt, ...);
-	static int Write(int nLevel, const char* szFmt, ...);
+	static int				Start(int nID, const char* szPath);
+	static int				Start(const char* szPath);
+	static int				End(int nID);
+	static int				End();
+	static int				Write(int nID, int nLevel, const char* szFmt, ...);
+	static int				Write(int nLevel, const char* szFmt, ...);
 
 private:
-	static int write(int nID, int nLevel, const char* szFmt, va_list arg);
-	static const char* log_level(int nLevel);
-	static int get_id(int nID);
+	static int				write(int nID, int nLevel, const char* szFmt, va_list arg);
+	static const char*		log_level(int nLevel);
+	static int				get_id(int nID);
 };
 
 
+//! スタティックメンバ変数の実体の確保、初期化
+//! ログIDごとの排他オブジェクト
+CRITICAL_SECTION CLog::m_stCS[MAX_ID];
+//! ログファイルパス
+char CLog::m_szLogPath[MAX_ID][MAX_PATH];
+//! ログID使用状態
+int CLog::m_nUseStatus[MAX_ID] = {
+	NOT_USED, NOT_USED, NOT_USED, NOT_USED, NOT_USED,
+	NOT_USED, NOT_USED, NOT_USED, NOT_USED, NOT_USED
+};
+
+
+/**
+ * コンストラクタ
+ */
 CLog::CLog()
 {
+	// インスタンスは生成しない
+	assert(FALSE);
 }
 
+//CLog::~CLog()
+//{
+//}
 
-CLog::~CLog()
-{
-}
-
+/**
+ * @fn		Start
+ * @brief
+ * @param	[in]	
+ * @return
+ */
 int CLog::Start(int nID, const char* szPath)
 {
 	int id = get_id(nID);
@@ -77,19 +96,31 @@ int CLog::Start(int nID, const char* szPath)
 
 	// TODO:パスチェック
 
-	memset(g_szLogPath[id], 0, sizeof(g_szLogPath[id]));
-	strncpy(g_szLogPath[id], szPath, sizeof(g_szLogPath[id]));
-	InitializeCriticalSection(&(g_cs[id]));
-	g_nUseStatus[id] = USED;
+	memset(m_szLogPath[id], 0, sizeof(m_szLogPath[id]));
+	strncpy(m_szLogPath[id], szPath, sizeof(m_szLogPath[id]));
+	InitializeCriticalSection(&(m_stCS[id]));
+	m_nUseStatus[id] = USED;
 
 	return id;
 }
 
+/**
+ * @fn		Start
+ * @brief
+ * @param	[in]	
+ * @return
+ */
 int CLog::Start(const char* szPath)
 {
-	return CLog::Start(0, szPath);
+	return CLog::Start(-1, szPath);		// 初回呼び出しであれば自動的に ID=0 が割り当てられる
 }
 
+/**
+ * @fn		End
+ * @brief
+ * @param	[in]	
+ * @return
+ */
 int CLog::End(int nID)
 {
 	if (nID < 0 || MAX_ID <= nID) {
@@ -97,26 +128,37 @@ int CLog::End(int nID)
 	}
 
 	// 指定IDのみ開放
-	if (g_nUseStatus[nID] == USED) {
-		DeleteCriticalSection(&(g_cs[nID]));
-		g_nUseStatus[nID] = NOT_USED;
+	if (m_nUseStatus[nID] == USED) {
+		DeleteCriticalSection(&(m_stCS[nID]));
+		m_nUseStatus[nID] = NOT_USED;
 	}
 	return 0;
 }
 
+/**
+ * @fn		End
+ * @brief
+ * @param	[in]	
+ * @return
+ */
 int CLog::End()
 {
 	// 全ID開放
 	for (int i = 0; i < MAX_ID; i++) {
-		if (g_nUseStatus[i] == USED) {
-			DeleteCriticalSection(&(g_cs[i]));
-			g_nUseStatus[i] = NOT_USED;
+		if (m_nUseStatus[i] == USED) {
+			DeleteCriticalSection(&(m_stCS[i]));
+			m_nUseStatus[i] = NOT_USED;
 		}
 	}
 	return 0;
 }
 
-
+/**
+ * @fn		Write
+ * @brief
+ * @param	[in]	
+ * @return
+ */
 int CLog::Write(int nID, int nLevel, const char* szFmt, ...)
 {
 	int ret = 0;
@@ -127,6 +169,12 @@ int CLog::Write(int nID, int nLevel, const char* szFmt, ...)
 	return ret;
 }
 
+/**
+ * @fn		Write
+ * @brief
+ * @param	[in]	
+ * @return
+ */
 int CLog::Write(int nLevel, const char* szFmt, ...)
 {
 	int ret = 0;
@@ -137,10 +185,15 @@ int CLog::Write(int nLevel, const char* szFmt, ...)
 	return ret;
 }
 
-
+/**
+ * @fn		write
+ * @brief
+ * @param	[in]	
+ * @return
+ */
 int CLog::write(int nID, int nLevel, const char* szFmt, va_list arg)
 {
-	if (nID < 0 || MAX_ID <= nID || g_nUseStatus[nID] != USED) {
+	if (nID < 0 || MAX_ID <= nID || m_nUseStatus[nID] != USED) {
 		return -1;
 	}
 
@@ -149,9 +202,9 @@ int CLog::write(int nID, int nLevel, const char* szFmt, va_list arg)
 
 	vsnprintf(szBuff0, sizeof(szBuff0), szFmt, arg);
 
-	EnterCriticalSection(&(g_cs[nID]));
+	EnterCriticalSection(&(m_stCS[nID]));
 	errno = 0;
-	FILE *fp = fopen(g_szLogPath[nID], "a+");
+	FILE *fp = fopen(m_szLogPath[nID], "a+");
 	if (fp == NULL) {
 		if (errno != 0) perror(NULL);
 		return -1;
@@ -174,13 +227,12 @@ int CLog::write(int nID, int nLevel, const char* szFmt, va_list arg)
 
 	if (fclose(fp) == 0) {
 		if (errno != 0) perror(NULL);
-		LeaveCriticalSection(&(g_cs[nID]));
+		LeaveCriticalSection(&(m_stCS[nID]));
 		return -1;
 	}
-	LeaveCriticalSection(&(g_cs[nID]));
+	LeaveCriticalSection(&(m_stCS[nID]));
 	return 0;
 }
-
 
 /**
  * @fn		log_level
@@ -220,14 +272,14 @@ int CLog::get_id(int nID)
 
 	if (0 <= nID) {
 		// 指定IDは使用可能か
-		if (g_nUseStatus[nID] == NOT_USED) {
+		if (m_nUseStatus[nID] == NOT_USED) {
 			id = nID;
 		}
 	}
 	else {
 		// -1:空いているIDから検索
 		for (int i = 0; i < MAX_ID; i++) {
-			if (g_nUseStatus[i] == NOT_USED) {
+			if (m_nUseStatus[i] == NOT_USED) {
 				id = i;
 				break;
 			}
