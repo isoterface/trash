@@ -48,7 +48,7 @@ typedef enum LOG_LEVEL {
  * @param	[in]	int nLevel	:
  * @return	
  */
-static char* log_level(int nLevel)
+static const char* log_level(int nLevel)
 {
 	switch (nLevel) {
 	case ERR:
@@ -103,7 +103,7 @@ static int get_id(int nID)
  * @param	[in]	char* szPath	:
  * @return　
  */
-int log_start(int nID, char* szPath)
+int log_start(int nID, const char* szPath)
 {
 	int id = get_id(nID);
 	if (id < 0) {
@@ -126,9 +126,9 @@ int log_start(int nID, char* szPath)
  * @param	[in]	char* szPath	:
  * @return　
  */
-int _log_start(char* szPath)
+int _log_start(const char* szPath)
 {
-	log_start(0, szPath);
+	return log_start(0, szPath);
 }
 
 /**
@@ -159,6 +159,7 @@ int log_end(int nID)
 			}
 		}
 	}
+	return 0;
 }
 
 /**
@@ -168,7 +169,7 @@ int log_end(int nID)
  */
 int _log_end()
 {
-	log_end(0);
+	return log_end(0);
 }
 
 /**
@@ -181,7 +182,7 @@ int _log_end()
  * @return　
  */
 //int log_write(int nID, int nLevel, char* szFmt, ...)
-static int _write(int nID, int nLevel, char* szFmt, va_list arg)
+static int _write(int nID, int nLevel, const char* szFmt, va_list arg)
 {
 	if (nID < 0 || MAX_ID <= nID || g_nUseStatus[nID] != USED) {
 		return -1;
@@ -236,7 +237,7 @@ static int _write(int nID, int nLevel, char* szFmt, va_list arg)
  * @param	[in]	...				:
  * @return　
  */
-int log_write(int nID, int nLevel, char* szFmt, ...)
+int log_write(int nID, int nLevel, const char* szFmt, ...)
 {
 	int ret = 0;
 	va_list arg;
@@ -255,7 +256,7 @@ int log_write(int nID, int nLevel, char* szFmt, ...)
  * @param	[in]	...				:
  * @return　
  */
-int _log_write(int nLevel, char* szFmt, ...)
+int _log_write(int nLevel, const char* szFmt, ...)
 {
 	int ret = 0;
 	va_list arg;
