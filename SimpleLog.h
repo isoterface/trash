@@ -1,3 +1,9 @@
+/**
+ * @file	SimpleLog.h
+ * @brief	ƒƒOo—Í
+ * @author	?
+ * @date	?
+ */
 #pragma once
 
 #include <stdio.h>
