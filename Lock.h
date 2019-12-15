@@ -40,6 +40,7 @@ public:
 CLock::CLock()
 	: m_bInit(FALSE)
 {
+	Init();
 }
 
 /**
@@ -57,8 +58,10 @@ CLock::~CLock()
  */
 void CLock::Init()
 {
-	InitializeCriticalSection(&m_stCS);
-	m_bInit = TRUE;
+	if (!m_bInit) {
+		InitializeCriticalSection(&m_stCS);
+		m_bInit = TRUE;
+	}
 }
 
 /**
