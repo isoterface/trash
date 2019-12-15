@@ -1,3 +1,9 @@
+/**
+ * @file	IniFile.h
+ * @brief	INIファイルアクセス
+ * @author	?
+ * @date	?
+ */
 #pragma once
 
 #include "windows.h"
@@ -7,33 +13,33 @@
 
 #pragma comment(lib, "shlwapi.lib")
 
-//namespace MyHelper
-//{
 #define		INI_KEY_BUFF_SIZE		(64)
 
-
-//typedef struct {
-//	TCHAR szFullPath[MAX_PATH + 1];
-//	TCHAR szDrive[MAX_PATH + 1];
-//	TCHAR szDir[MAX_PATH + 1];
-//	TCHAR szFileBase[MAX_PATH + 1];
-//	TCHAR szFileExt[MAX_PATH + 1];
-//} ST_FILE_PATH_INFO;
-
-class CPathInfo
+/**
+ * @class	CPathInfo
+ * @brief	ファイルパス情報解析用補助クラス
+ */
+static class CPathInfo
 {
 public:
-	TCHAR szFullPath[MAX_PATH + 1];
-	TCHAR szDrive[MAX_PATH + 1];
-	TCHAR szDir[MAX_PATH + 1];
-	TCHAR szFileBase[MAX_PATH + 1];
-	TCHAR szFileExt[MAX_PATH + 1];
+	TCHAR szFullPath[MAX_PATH + 1];		//! フルパス情報
+	TCHAR szDrive[MAX_PATH + 1];		//! ドライブ
+	TCHAR szDir[MAX_PATH + 1];			//! フォルダパス
+	TCHAR szFileBase[MAX_PATH + 1];		//! ファイル名
+	TCHAR szFileExt[MAX_PATH + 1];		//! ファイル拡張子
 
 public:
+	/**
+	 * コンストラクタ
+	 */
 	CPathInfo()
 	{
 		ClearAll();
 	}
+	/**
+	 * @fn		ClearAll
+	 * @brief	パス情報初期化
+	 */
 	void ClearAll()
 	{
 		memset(szFullPath, 0, sizeof(szFullPath));
@@ -42,6 +48,12 @@ public:
 		memset(szFileBase, 0, sizeof(szFileBase));
 		memset(szFileExt, 0, sizeof(szFileExt));
 	}
+	/**
+	 * @fn		SplitPath
+	 * @brief	引数に指定されたパスを各単位に分割
+	 * @param	[in]	LPCTSTR lpszPath	: ファイルパス
+	 * @return	TRUE:成功, FALSE:失敗
+	 */
 	BOOL SplitPath(LPCTSTR lpszPath)
 	{
 		if (lpszPath == NULL) {
@@ -53,20 +65,28 @@ public:
 		_tsplitpath(szFullPath, szDrive, szDir, szFileBase, szFileExt);
 		return TRUE;
 	}
+	/**
+	 * @fn		SplitPath
+	 * @brief	メンバ変数 szFullPath に保持しているパス情報を各単位に分割
+	 * @return	TRUE:成功
+	 */
 	BOOL SplitPath()
 	{
 		_tsplitpath(szFullPath, szDrive, szDir, szFileBase, szFileExt);
 		return TRUE;
 	}
-
 };
 
 
+/**
+ * @class	CIniFile
+ * @brief	INIファイルアクセスクラス
+ */
 class CIniFile
 {
 private:
-	TCHAR	m_szFile[MAX_PATH + 1];
-	BOOL	m_bInit;
+	TCHAR	m_szFile[MAX_PATH + 1];			//! INIファイルパス
+	BOOL	m_bInit;						//! 初期化済みフラグ
 
 public:
 	CIniFile(LPCTSTR lpszPath, BOOL bCreate = TRUE);
@@ -87,23 +107,39 @@ public:
 };
 
 
-// パス指定 以下の形式を考慮
-// 絶対　CIniFile cIni0(_T("C:\\My Documents\\Program\\Config\\IniFile.ini"));
-// 相対　CIniFile cIni1(_T("Config\\IniFile.ini"));
-// ファイルのみ　CIniFile cIni2(_T("IniFile.ini"));
-// TODO:相対パス指定時、".\Dir\File..."という形式は考慮していない
+/**
+ * @brief	コンストラクタ
+ * @param	[in]	LPCTSTR lpszPath	: INIファイルパス
+ * @param	[in]	BOOL bCreate		: 対象INIファイルが存在しない場合に作成するかどうか(TRUE:作成する, FALSE:作成しない)
+ */
 CIniFile::CIniFile(LPCTSTR lpszPath, BOOL bCreate/*=TRUE*/) :
 	m_bInit(FALSE)
 {
+	// パス指定 以下の形式を考慮
+	// 絶対　CIniFile cIni0(_T("C:\\My Documents\\Program\\Config\\IniFile.ini"));
+	// 相対　CIniFile cIni1(_T("Config\\IniFile.ini"));
+	// ファイルのみ　CIniFile cIni2(_T("IniFile.ini"));
+	// TODO:相対パス指定時、".\Dir\File..."という形式は考慮していない
+
 	SetPath(lpszPath, bCreate);
 }
 
 
+/**
+ * @brief	デストラクタ
+ */
 CIniFile::~CIniFile()
 {
 }
 
 
+/**
+ * @fn		SetPath
+ * @brief	INIファイルのパスを設定する
+ * @param	[in]	LPCTSTR lpszPath	: INIファイルパス
+ * @param	[in]	BOOL bCreate		: 対象INIファイルが存在しない場合に作成するかどうか(TRUE:作成する, FALSE:作成しない)
+ * @return　TRUE:成功, FALSE:失敗
+ */
 BOOL CIniFile::SetPath(LPCTSTR lpszPath, BOOL bCreate/*=TRUE*/)
 {
 	if (lpszPath == NULL) {
@@ -155,6 +191,13 @@ BOOL CIniFile::SetPath(LPCTSTR lpszPath, BOOL bCreate/*=TRUE*/)
 }
 
 
+/**
+ * @fn		GetPath
+ * @brief	対象INIファイルのパスを取得する
+ * @param	[in]	LPTSTR lpszBuff		: 取得先バッファ領域
+ * @param	[in]	DWORD dwSize		: バッファ領域サイズ
+ * @return　TRUE:成功, FALSE:失敗
+ */
 BOOL CIniFile::GetPath(LPTSTR lpszBuff, DWORD dwSize)
 {
 	if (!m_bInit) {
@@ -169,6 +212,16 @@ BOOL CIniFile::GetPath(LPTSTR lpszBuff, DWORD dwSize)
 }
 
 
+/**
+ * @fn		ReadString
+ * @brief	対象キーの文字列を読み込む
+ * @param	[in]	LPCTSTR lpszSection		: セクション
+ * @param	[in]	LPCTSTR lpszKey			: キー
+ * @param	[in]	LPCTSTR lpszDefault		: デフォルト値
+ * @param	[out]	LPTSTR lpszStr			: 読み込む先のバッファ領域
+ * @param	[in]	DWORD dwSize			: バッファ領域サイズ
+ * @return	0:失敗or読み取り文字列なし, 1～:読み取った文字数
+ */
 DWORD CIniFile::ReadString(LPCTSTR lpszSection, LPCTSTR lpszKey, LPCTSTR lpszDefault, LPTSTR lpszStr, DWORD dwSize)
 {
 	if (!m_bInit) {
@@ -184,6 +237,14 @@ DWORD CIniFile::ReadString(LPCTSTR lpszSection, LPCTSTR lpszKey, LPCTSTR lpszDef
 }
 
 
+/**
+ * @fn		ReadInt
+ * @brief	対象キーの整数値を読み込む(負数対応)
+ * @param	[in]	LPCTSTR lpszSection		: セクション
+ * @param	[in]	LPCTSTR lpszKey			: キー
+ * @param	[in]	INT nDefault			: デフォルト値
+ * @return	読み取った数値(失敗の場合は0が返る)
+ */
 LONG CIniFile::ReadInt(LPCTSTR lpszSection, LPCTSTR lpszKey, INT nDefault)
 {
 	if (!m_bInit) {
@@ -213,6 +274,14 @@ LONG CIniFile::ReadInt(LPCTSTR lpszSection, LPCTSTR lpszKey, INT nDefault)
 }
 
 
+/**
+ * @fn		ReadHex
+ * @brief	対象キーの16進数値を読み込む
+ * @param	[in]	LPCTSTR lpszSection		: セクション
+ * @param	[in]	LPCTSTR lpszKey			: キー
+ * @param	[in]	UINT uiDefault			: デフォルト値
+ * @return	読み取った数値(失敗の場合は0が返る)
+ */
 UINT CIniFile::ReadHex(LPCTSTR lpszSection, LPCTSTR lpszKey, UINT uiDefault)
 {
 	if (!m_bInit) {
@@ -246,6 +315,14 @@ UINT CIniFile::ReadHex(LPCTSTR lpszSection, LPCTSTR lpszKey, UINT uiDefault)
 }
 
 
+/**
+ * @fn		ReadDouble
+ * @brief	対象キーの実数値を読み込む
+ * @param	[in]	LPCTSTR lpszSection		: セクション
+ * @param	[in]	LPCTSTR lpszKey			: キー
+ * @param	[in]	DOUBLE dDefault			: デフォルト値
+ * @return	読み取った数値(失敗の場合は0が返る)
+ */
 DOUBLE CIniFile::ReadDouble(LPCTSTR lpszSection, LPCTSTR lpszKey, DOUBLE dDefault)
 {
 	// 丸め注意
@@ -277,6 +354,14 @@ DOUBLE CIniFile::ReadDouble(LPCTSTR lpszSection, LPCTSTR lpszKey, DOUBLE dDefaul
 }
 
 
+/**
+ * @fn		WriteString
+ * @brief	対象キーに文字列データを保存する
+ * @param	[in]	LPCTSTR lpszSection		: セクション
+ * @param	[in]	LPCTSTR lpszKey			: キー
+ * @param	[in]	LPCTSTR lpszStr			: 文字列データ
+ * @return TRUE:成功, FALSE:失敗
+ */
 BOOL CIniFile::WriteString(LPCTSTR lpszSection, LPCTSTR lpszKey, LPCTSTR lpszStr)
 {
 	if (!m_bInit) {
@@ -292,6 +377,14 @@ BOOL CIniFile::WriteString(LPCTSTR lpszSection, LPCTSTR lpszKey, LPCTSTR lpszStr
 
 	return TRUE;
 }
+/**
+ * @fn		WriteInt
+ * @brief	対象キーに整数値データを保存する
+ * @param	[in]	LPCTSTR lpszSection		: セクション
+ * @param	[in]	LPCTSTR lpszKey			: キー
+ * @param	[in]	LONG lVal				: 整数値データ
+ * @return TRUE:成功, FALSE:失敗
+ */
 BOOL CIniFile::WriteInt(LPCTSTR lpszSection, LPCTSTR lpszKey, LONG lVal)
 {
 	TCHAR szBuff[INI_KEY_BUFF_SIZE];
@@ -301,6 +394,14 @@ BOOL CIniFile::WriteInt(LPCTSTR lpszSection, LPCTSTR lpszKey, LONG lVal)
 
 	return WriteString(lpszSection, lpszKey, szBuff);
 }
+/**
+ * @fn		WriteHex
+ * @brief	対象キーに16進数値データを保存する
+ * @param	[in]	LPCTSTR lpszSection		: セクション
+ * @param	[in]	LPCTSTR lpszKey			: キー
+ * @param	[in]	UINT uiVal				: 16進数値データ
+ * @return TRUE:成功, FALSE:失敗
+ */
 BOOL CIniFile::WriteHex(LPCTSTR lpszSection, LPCTSTR lpszKey, UINT uiVal)
 {
 	TCHAR szBuff[INI_KEY_BUFF_SIZE];
@@ -310,6 +411,14 @@ BOOL CIniFile::WriteHex(LPCTSTR lpszSection, LPCTSTR lpszKey, UINT uiVal)
 
 	return WriteString(lpszSection, lpszKey, szBuff);
 }
+/**
+ * @fn		WriteHex
+ * @brief	対象キーに実数値データを保存する
+ * @param	[in]	LPCTSTR lpszSection		: セクション
+ * @param	[in]	LPCTSTR lpszKey			: キー
+ * @param	[in]	DOUBLE dVal				: 実数値データ
+ * @return TRUE:成功, FALSE:失敗
+ */
 BOOL CIniFile::WriteDouble(LPCTSTR lpszSection, LPCTSTR lpszKey, DOUBLE dVal)
 {
 	// 丸め注意
@@ -361,6 +470,4 @@ BOOL CIniFile::WriteDouble(LPCTSTR lpszSection, LPCTSTR lpszKey, DOUBLE dVal)
 //	CMyHelper::CEditWriteText(this, IDC_EDIT1, cs);
 //	cs.Format(_T("ReadDouble d2 = %lf"), d2);
 //	CMyHelper::CEditWriteText(this, IDC_EDIT1, cs);
-//}
-
 //}
