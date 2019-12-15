@@ -219,7 +219,7 @@ static int _write(int nID, int nLevel, const char* szFmt, va_list arg)
 		, szBuff0);
 	fputs(szBuff1, fp);
 
-	if (fclose(fp) == 0) {
+	if (fclose(fp) != 0) {
 		if (errno != 0) perror(NULL);
 		LeaveCriticalSection(&(g_cs[nID]));
 		return -1;

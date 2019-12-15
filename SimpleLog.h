@@ -57,8 +57,8 @@ public:
 
 private:
 	static int				write(int nID, int nLevel, const char* szFmt, va_list arg);
-	static const char*		log_level(int nLevel);
-	static int				get_id(int nID);
+	static const char*		logLevel(int nLevel);
+	static int				getId(int nID);
 };
 
 
@@ -96,7 +96,7 @@ CLog::CLog()
  */
 int CLog::Start(int nID, const char* szPath)
 {
-	int id = get_id(nID);
+	int id = getId(nID);
 	if (id < 0) {
 		return -1;
 	}
@@ -228,11 +228,11 @@ int CLog::write(int nID, int nLevel, const char* szFmt, va_list arg)
 		, stTime.wMinute
 		, stTime.wSecond
 		, stTime.wMilliseconds
-		, log_level(nLevel)
+		, logLevel(nLevel)
 		, szBuff0);
 	fputs(szBuff1, fp);
 
-	if (fclose(fp) == 0) {
+	if (fclose(fp) != 0) {
 		if (errno != 0) perror(NULL);
 		LeaveCriticalSection(&(m_stCS[nID]));
 		return -1;
@@ -247,7 +247,7 @@ int CLog::write(int nID, int nLevel, const char* szFmt, va_list arg)
  * @param	[in]	int nLevel	:
  * @return
  */
-const char* CLog::log_level(int nLevel)
+const char* CLog::logLevel(int nLevel)
 {
 	switch (nLevel) {
 	case ERR:
@@ -269,7 +269,7 @@ const char* CLog::log_level(int nLevel)
  * @param	[in]	int nID		:
  * @return
  */
-int CLog::get_id(int nID)
+int CLog::getId(int nID)
 {
 	if (nID < -1 || MAX_ID <= nID) {
 		return -1;
