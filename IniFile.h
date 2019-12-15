@@ -200,7 +200,7 @@ BOOL CIniFile::SetPath(LPCTSTR lpszPath, BOOL bCreate/*=TRUE*/)
  */
 BOOL CIniFile::GetPath(LPTSTR lpszBuff, DWORD dwSize)
 {
-	if (!m_bInit) {
+	if (!m_bInit || lpszBuff == NULL) {
 		return FALSE;
 	}
 	if (_tcslen(m_szFile) <= 0) {
@@ -387,6 +387,10 @@ BOOL CIniFile::WriteString(LPCTSTR lpszSection, LPCTSTR lpszKey, LPCTSTR lpszStr
  */
 BOOL CIniFile::WriteInt(LPCTSTR lpszSection, LPCTSTR lpszKey, LONG lVal)
 {
+	if (lpszSection == NULL || lpszKey == NULL) {
+		return FALSE;
+	}
+
 	TCHAR szBuff[INI_KEY_BUFF_SIZE];
 
 	memset(szBuff, 0, sizeof(szBuff));
@@ -404,6 +408,10 @@ BOOL CIniFile::WriteInt(LPCTSTR lpszSection, LPCTSTR lpszKey, LONG lVal)
  */
 BOOL CIniFile::WriteHex(LPCTSTR lpszSection, LPCTSTR lpszKey, UINT uiVal)
 {
+	if (lpszSection == NULL || lpszKey == NULL) {
+		return FALSE;
+	}
+
 	TCHAR szBuff[INI_KEY_BUFF_SIZE];
 
 	memset(szBuff, 0, sizeof(szBuff));
@@ -422,6 +430,10 @@ BOOL CIniFile::WriteHex(LPCTSTR lpszSection, LPCTSTR lpszKey, UINT uiVal)
 BOOL CIniFile::WriteDouble(LPCTSTR lpszSection, LPCTSTR lpszKey, DOUBLE dVal)
 {
 	// ŠÛ‚ß’ˆÓ
+
+	if (lpszSection == NULL || lpszKey == NULL) {
+		return FALSE;
+	}
 
 	TCHAR szBuff[INI_KEY_BUFF_SIZE];
 

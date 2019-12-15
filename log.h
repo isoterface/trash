@@ -15,19 +15,17 @@
 
 #define MAX_ID		(10)
 #define LOG_MAX		(256)
-#define NOT_USED	(0)
-#define USED		(1)
-
-//#define LOG_START(path)						log_start(path)
-//#define LOG_END(id)							log_end(id)
-//#define LOG_WRITE(id, level, fmt, ...)		log_write(id, level, fmt, __VA_ARGS__)
 
 
-static CRITICAL_SECTION	g_cs[MAX_ID];		//! ログIDごとの排他オブジェクト
-static char				g_szLogPath[MAX_ID][MAX_PATH];		//! ログファイルパス
-static int				g_nUseStatus[MAX_ID] = {			//! ログID使用状態
-	NOT_USED, NOT_USED, NOT_USED, NOT_USED, NOT_USED,
-	NOT_USED, NOT_USED, NOT_USED, NOT_USED, NOT_USED };
+ //! ログIDごとの排他オブジェクト
+static CRITICAL_SECTION	g_cs[MAX_ID];
+//! ログファイルパス
+static char				g_szLogPath[MAX_ID][MAX_PATH];
+//! ログID使用状態
+static BOOL				g_bUsed[MAX_ID] = {
+	FALSE, FALSE, FALSE, FALSE, FALSE,
+	FALSE, FALSE, FALSE, FALSE, FALSE
+};
 
 
 /**
@@ -66,7 +64,7 @@ static const char* log_level(int nLevel)
 
 /**
  * @fn		get_id
- * @brief
+ * @brief	
  * @param	[in]	int nID		:
  * @return	
  */
@@ -80,14 +78,14 @@ static int get_id(int nID)
 
 	if (0 <= nID) {
 		// 指定IDは使用可能か
-		if (g_nUseStatus[nID] == NOT_USED) {
+		if (g_bUsed[nID] == FALSE) {
 			id = nID;
 		}
 	}
 	else {
 		// -1:空いているIDから検索
 		for (int i = 0; i < MAX_ID; i++) {
-			if (g_nUseStatus[i] == NOT_USED) {
+			if (g_bUsed[i] == FALSE) {
 				id = i;
 				break;
 			}
@@ -105,6 +103,10 @@ static int get_id(int nID)
  */
 int log_start(int nID, const char* szPath)
 {
+	if (szPath == NULL) {
+		return -1;
+	}
+
 	int id = get_id(nID);
 	if (id < 0) {
 		return -1;
@@ -115,19 +117,22 @@ int log_start(int nID, const char* szPath)
 	memset(g_szLogPath[id], 0, sizeof(g_szLogPath[id]));
 	strncpy(g_szLogPath[id], szPath, sizeof(g_szLogPath[id]));
 	InitializeCriticalSection(&(g_cs[id]));
-	g_nUseStatus[id] = USED;
+	g_bUsed[id] = TRUE;
 
 	return id;
 }
 
 /**
  * @fn		_log_start
- * @brief
+ * @brief	
  * @param	[in]	char* szPath	:
  * @return　
  */
 int _log_start(const char* szPath)
 {
+	if (szPath == NULL) {
+		return -1;
+	}
 	return log_start(0, szPath);
 }
 
@@ -145,17 +150,17 @@ int log_end(int nID)
 
 	if (0 <= nID) {
 		// 指定IDのみ開放
-		if (g_nUseStatus[nID] == USED) {
+		if (g_bUsed[nID] == TRUE) {
 			DeleteCriticalSection(&(g_cs[nID]));
-			g_nUseStatus[nID] = NOT_USED;
+			g_bUsed[nID] = FALSE;
 		}
 	}
 	else {
 		// 全ID開放
 		for (int i = 0; i < MAX_ID; i++) {
-			if (g_nUseStatus[i] == USED) {
+			if (g_bUsed[i] == TRUE) {
 				DeleteCriticalSection(&(g_cs[i]));
-				g_nUseStatus[i] = NOT_USED;
+				g_bUsed[i] = FALSE;
 			}
 		}
 	}
@@ -181,10 +186,13 @@ int _log_end()
  * @param	[in]	va_list arg		:
  * @return　
  */
-//int log_write(int nID, int nLevel, char* szFmt, ...)
+ //int log_write(int nID, int nLevel, char* szFmt, ...)
 static int _write(int nID, int nLevel, const char* szFmt, va_list arg)
 {
-	if (nID < 0 || MAX_ID <= nID || g_nUseStatus[nID] != USED) {
+	if (szFmt == NULL) {
+		return -1;
+	}
+	if (nID < 0 || MAX_ID <= nID || g_bUsed[nID] != TRUE) {
 		return -1;
 	}
 
@@ -239,6 +247,10 @@ static int _write(int nID, int nLevel, const char* szFmt, va_list arg)
  */
 int log_write(int nID, int nLevel, const char* szFmt, ...)
 {
+	if (szFmt == NULL) {
+		return -1;
+	}
+
 	int ret = 0;
 	va_list arg;
 	va_start(arg, szFmt);
@@ -258,6 +270,10 @@ int log_write(int nID, int nLevel, const char* szFmt, ...)
  */
 int _log_write(int nLevel, const char* szFmt, ...)
 {
+	if (szFmt == NULL) {
+		return -1;
+	}
+
 	int ret = 0;
 	va_list arg;
 	va_start(arg, szFmt);
