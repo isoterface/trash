@@ -42,7 +42,7 @@ private:
 	//! スタティックメンバ変数（宣言のみ、実体の確保はcpp側で行う）
 	static CRITICAL_SECTION	m_stCS[MAX_ID];						//! ログIDごとの排他オブジェクト
 	static char				m_szLogPath[MAX_ID][MAX_PATH];		//! ログファイルパス
-	static int				m_nUseStatus[MAX_ID];				//! ログID使用状態
+	static int				m_nUsed[MAX_ID];					//! ログID使用状態
 
 public:
 	CLog();
@@ -68,7 +68,7 @@ CRITICAL_SECTION CLog::m_stCS[MAX_ID];
 //! ログファイルパス
 char CLog::m_szLogPath[MAX_ID][MAX_PATH];
 //! ログID使用状態
-int CLog::m_nUseStatus[MAX_ID] = {
+int CLog::m_nUsed[MAX_ID] = {
 	NOT_USED, NOT_USED, NOT_USED, NOT_USED, NOT_USED,
 	NOT_USED, NOT_USED, NOT_USED, NOT_USED, NOT_USED
 };
@@ -105,7 +105,7 @@ int CLog::Start(int nID, const char* szPath)
 	memset(m_szLogPath[id], 0, sizeof(m_szLogPath[id]));
 	strncpy(m_szLogPath[id], szPath, sizeof(m_szLogPath[id]));
 	InitializeCriticalSection(&(m_stCS[id]));
-	m_nUseStatus[id] = USED;
+	m_nUsed[id] = USED;
 
 	return id;
 }
@@ -134,9 +134,9 @@ int CLog::End(int nID)
 	}
 
 	// 指定IDのみ開放
-	if (m_nUseStatus[nID] == USED) {
+	if (m_nUsed[nID] == USED) {
 		DeleteCriticalSection(&(m_stCS[nID]));
-		m_nUseStatus[nID] = NOT_USED;
+		m_nUsed[nID] = NOT_USED;
 	}
 	return 0;
 }
@@ -151,9 +151,9 @@ int CLog::End()
 {
 	// 全ID開放
 	for (int i = 0; i < MAX_ID; i++) {
-		if (m_nUseStatus[i] == USED) {
+		if (m_nUsed[i] == USED) {
 			DeleteCriticalSection(&(m_stCS[i]));
-			m_nUseStatus[i] = NOT_USED;
+			m_nUsed[i] = NOT_USED;
 		}
 	}
 	return 0;
@@ -199,7 +199,7 @@ int CLog::Write(int nLevel, const char* szFmt, ...)
  */
 int CLog::write(int nID, int nLevel, const char* szFmt, va_list arg)
 {
-	if (nID < 0 || MAX_ID <= nID || m_nUseStatus[nID] != USED) {
+	if (nID < 0 || MAX_ID <= nID || m_nUsed[nID] != USED) {
 		return -1;
 	}
 
@@ -278,14 +278,14 @@ int CLog::get_id(int nID)
 
 	if (0 <= nID) {
 		// 指定IDは使用可能か
-		if (m_nUseStatus[nID] == NOT_USED) {
+		if (m_nUsed[nID] == NOT_USED) {
 			id = nID;
 		}
 	}
 	else {
 		// -1:空いているIDから検索
 		for (int i = 0; i < MAX_ID; i++) {
-			if (m_nUseStatus[i] == NOT_USED) {
+			if (m_nUsed[i] == NOT_USED) {
 				id = i;
 				break;
 			}
