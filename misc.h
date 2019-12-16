@@ -11,13 +11,17 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <Windows.h>
 
 
 #define MEM_DUMP(pvoid, n, arr)			mem_dump(pvoid, n, arr, sizeof(arr))
 #define _MEM_DUMP(pvoid, n, arr)		_mem_dump(pvoid, n, arr, sizeof(arr))
 
-#define FMT_STR(arr, fmt, ...)		fmt_str(arr, sizeof(arr), fmt, __VA_ARGS__)
-#define _FMT_STR(arr, fmt, ...)		_fmt_str(arr, sizeof(arr), fmt, __VA_ARGS__)
+#define FMT_STR(arr, fmt, ...)			fmt_str(arr, sizeof(arr), fmt, __VA_ARGS__)
+#define _FMT_STR(arr, fmt, ...)			_fmt_str(arr, sizeof(arr), fmt, __VA_ARGS__)
+
+#define _STR_CURR_TIME(buff)			_str_curr_time(buff, sizeof(buff))
+#define _GET_FILENAME(path, buff)		_get_filename(path, buff, sizeof(buff))
 
 
 /**
@@ -159,13 +163,13 @@ int split_str(const char* szSrc, char* szDelim, char* szDest, int nDest, char* a
 
 
 /**
- * @fn		str_curr_time
+ * @fn		_str_curr_time
  * @brief	現在日時の文字列を得る
  * @param	[OUT]	char* szBuff	: 日時文字列を格納するバッファ領域
  * @param	[IN]	int nSize		: バッファ領域のサイズ
  * @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
  */
-static const char* str_curr_time(char* szBuff, int nSize)
+const char* _str_curr_time(char* szBuff, int nSize)
 {
 	if (szBuff == NULL) {
 		return "(NULL)";
@@ -181,6 +185,32 @@ static const char* str_curr_time(char* szBuff, int nSize)
 		, stTime.wMinute
 		, stTime.wSecond
 		, stTime.wMilliseconds);
+	return szBuff;
+}
+
+
+/**
+* @fn		_get_filename
+* @brief	フルパスよりファイル名のみを取得
+* @param	[IN]	char* szPath	: ファイルパス文字列
+* @param	[OUT]	char* szBuff	: ファイル名を格納するバッファ領域
+* @param	[IN]	int nSize		: バッファ領域のサイズ
+* @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
+*/
+const char* _get_filename(const char* szPath, char* szBuff, int nSize)
+{
+	if (szPath == NULL || szBuff == NULL) {
+		return "(NULL)";
+	}
+
+	char szDrv[MAX_PATH+1];
+	char szDir[MAX_PATH+1];
+	char szFname[MAX_PATH+1];
+	char szExt[MAX_PATH+1];
+
+	_splitpath(szPath, szDrv, szDir, szFname, szExt);
+	snprintf(szBuff, nSize, "%s%s", szFname, szExt);
+
 	return szBuff;
 }
 
