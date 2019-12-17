@@ -69,9 +69,6 @@ CThread::CThread()
  */
 CThread::~CThread()
 {
-	if (m_hThread != NULL) {
-		Join();
-	}
 }
 
 /**
