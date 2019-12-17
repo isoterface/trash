@@ -20,8 +20,10 @@
 #define FMT_STR(arr, fmt, ...)			fmt_str(arr, sizeof(arr), fmt, __VA_ARGS__)
 #define _FMT_STR(arr, fmt, ...)			_fmt_str(arr, sizeof(arr), fmt, __VA_ARGS__)
 
-#define _STR_CURR_TIME(buff)			_str_curr_time(buff, sizeof(buff))
+#define _STR_TIME_NOW(buff)				_str_time_now(buff, sizeof(buff))
 #define _GET_FILENAME(path, buff)		_get_filename(path, buff, sizeof(buff))
+
+#define DEBUG_PRINT(fmt, ...)			printf("%s: " fmt "\r\n", __FUNCTION__, __VA_ARGS__)
 
 
 /**
@@ -163,13 +165,13 @@ int split_str(const char* szSrc, char* szDelim, char* szDest, int nDest, char* a
 
 
 /**
- * @fn		_str_curr_time
+ * @fn		_str_time_now
  * @brief	現在日時の文字列を得る
  * @param	[OUT]	char* szBuff	: 日時文字列を格納するバッファ領域
  * @param	[IN]	int nSize		: バッファ領域のサイズ
  * @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
  */
-const char* _str_curr_time(char* szBuff, int nSize)
+const char* _str_time_now(char* szBuff, int nSize)
 {
 	if (szBuff == NULL) {
 		return "(NULL)";

@@ -1,8 +1,19 @@
+/**
+* @file		SimpleThread.h
+* @brief	スレッド処理
+* @author	?
+* @date		?
+*/
 #pragma once
 
 #include <windows.h>
+#include "misc.h"
 
 
+/**
+ * @class	CThread
+ * @brief	スレッド処理
+ */
 class CThread
 {
 private:
@@ -18,12 +29,12 @@ private:
 public:
 	CThread();
 	~CThread();
-	
-	BOOL					SetParameter(LPSECURITY_ATTRIBUTES lpThreadAttributes,
-								DWORD dwStackSize,
-								LPTHREAD_START_ROUTINE lpStartAddress,
-								LPVOID lpParameter,
-								DWORD dwCreationFlags);
+
+	BOOL					SetArgs(LPSECURITY_ATTRIBUTES lpThreadAttributes,
+		DWORD dwStackSize,
+		LPTHREAD_START_ROUTINE lpStartAddress,
+		LPVOID lpParameter,
+		DWORD dwCreationFlags);
 	BOOL					SetThreadProc(LPTHREAD_START_ROUTINE lpStartAddress);
 	BOOL					SetThreadParam(LPVOID lpParameter);
 
@@ -32,10 +43,15 @@ public:
 	static BOOL				JoinAll(CThread acThread[], int nCount, DWORD dwWait = INFINITE);
 
 	HANDLE					GetHandle();
+
+private:
+	void					clearHandle();
 };
 
 
-
+/**
+ * コンストラクタ
+ */
 CThread::CThread()
 {
 	m_hThread = NULL;
@@ -48,19 +64,30 @@ CThread::CThread()
 	m_dwThreadId = 0;
 }
 
-
+/**
+ * デストラクタ
+ */
 CThread::~CThread()
 {
+	if (m_hThread != NULL) {
+		Join();
+	}
 }
 
-
-BOOL CThread::SetParameter(LPSECURITY_ATTRIBUTES lpThreadAttributes,
+/**
+* @fn
+* @brief
+* @param	[in]
+* @return
+*/
+BOOL CThread::SetArgs(LPSECURITY_ATTRIBUTES lpThreadAttributes,
 	DWORD dwStackSize,
 	LPTHREAD_START_ROUTINE lpStartAddress,
 	LPVOID lpParameter,
 	DWORD dwCreationFlags)
 {
 	if (lpStartAddress == NULL) {
+		DEBUG_PRINT("ThreadProc is NULL.");
 		return FALSE;
 	}
 
@@ -73,9 +100,16 @@ BOOL CThread::SetParameter(LPSECURITY_ATTRIBUTES lpThreadAttributes,
 	return TRUE;
 }
 
+/**
+* @fn
+* @brief
+* @param	[in]
+* @return
+*/
 BOOL CThread::Start()
 {
 	if (m_lpStartAddress == NULL) {
+		DEBUG_PRINT("ThreadProc is NULL.");
 		return FALSE;
 	}
 	m_hThread = ::CreateThread(
@@ -86,27 +120,71 @@ BOOL CThread::Start()
 		m_dwCreationFlags,
 		&m_dwThreadId);
 	if (m_hThread == NULL) {
+		DEBUG_PRINT("CreateThread failed.");
 		return FALSE;
 	}
-	::ResumeThread(m_hThread);
+	if (::ResumeThread(m_hThread) == -1) {		// 0xFFFFFFFF:失敗
+		DEBUG_PRINT("ResumeThread failed.");
+		return FALSE;
+	}
 	return TRUE;
 }
 
+/**
+* @fn
+* @brief
+* @param	[in]
+* @return
+*/
 BOOL CThread::Join(DWORD dwWait/*=INFINITE*/)
 {
-	::WaitForSingleObject(m_hThread, dwWait);
-	::CloseHandle(m_hThread);
-	return TRUE;
+	DWORD dwErr = 0;
+	DWORD dwRet = ::WaitForSingleObject(m_hThread, dwWait);
+	if (dwRet != WAIT_OBJECT_0) {
+		switch (dwRet) {
+		case WAIT_ABANDONED:
+			DEBUG_PRINT("WaitForSingleObject failed.(WAIT_ABANDONED).");
+			break;
+		case WAIT_TIMEOUT:
+			DEBUG_PRINT("WaitForSingleObject failed.(WAIT_TIMEOUT)");
+			break;
+		case WAIT_FAILED:
+			dwErr = ::GetLastError();
+			DEBUG_PRINT("WaitForSingleObject failed.(WAIT_FAILED(%d))", dwErr);
+			break;
+		default:
+			DEBUG_PRINT("WaitForSingleObject failed.(%d)", dwRet);
+			break;
+		}
+		return FALSE;
+	}
+
+	BOOL bClose = FALSE;
+	if ((bClose = ::CloseHandle(m_hThread)) == TRUE) {
+		clearHandle();
+	}
+	if (!bClose) {
+		DEBUG_PRINT("CloseHandle failed.");
+	}
+	return bClose;
 }
 
+/**
+* @fn
+* @brief
+* @param	[in]
+* @return
+*/
 BOOL CThread::JoinAll(CThread acThread[], int nCount, DWORD dwWait/*=INFINITE*/)
 {
 	if (acThread == NULL) {
+		DEBUG_PRINT("ThreadList is NULL.");
 		return FALSE;
 	}
 
 	HANDLE* pHandle = new HANDLE[nCount];
 	if (pHandle == NULL) {
+		DEBUG_PRINT("new HANDLE ptr create failed.");
 		return FALSE;
 	}
 
@@ -114,45 +192,94 @@ BOOL CThread::JoinAll(CThread acThread[], int nCount, DWORD dwWait/*=INFINITE*/)
 		pHandle[i] = acThread[i].GetHandle();
 	}
 
-	::WaitForMultipleObjects(
+	DWORD dwErr = 0;
+	DWORD dwRet = ::WaitForMultipleObjects(
 		nCount,
 		pHandle,
 		TRUE,
 		dwWait);
-
-	for (int i = 0; i < nCount; i++) {
-		::CloseHandle(pHandle[i]);
+	if (dwRet != WAIT_OBJECT_0) {
+		switch (dwRet) {
+		case WAIT_ABANDONED_0:
+			DEBUG_PRINT("WaitForMultipleObjects failed.(WAIT_ABANDONED).");
+			break;
+		case WAIT_TIMEOUT:
+			DEBUG_PRINT("WaitForMultipleObjects failed.(WAIT_TIMEOUT)");
+			break;
+		case WAIT_FAILED:
+			dwErr = ::GetLastError();
+			DEBUG_PRINT("WaitForMultipleObjects failed.(WAIT_FAILED(%d))", dwErr);
+			break;
+		default:
+			DEBUG_PRINT("WaitForMultipleObjects failed.(%d)", dwRet);
+			break;
+		}
+		return FALSE;
 	}
 
-
+	BOOL bRet = TRUE;
+	BOOL bClose = TRUE;
+	for (int i = 0; i < nCount; i++) {
+		if ((bRet = ::CloseHandle(pHandle[i])) == TRUE) {
+			acThread[i].clearHandle();
+		}
+		bClose &= bRet;
+	}
+	if (!bClose) {
+		DEBUG_PRINT("CloseHandle failed.");
+	}
 	delete[] pHandle;
 
-	return TRUE;
+	return bClose;
 }
 
+/**
+* @fn
+* @brief
+* @param	[in]
+* @return
+*/
 BOOL CThread::SetThreadProc(LPTHREAD_START_ROUTINE lpStartAddress)
 {
 	if (lpStartAddress == NULL) {
+		DEBUG_PRINT("ThreadFunc is NULL.");
 		return FALSE;
 	}
 	m_lpStartAddress = lpStartAddress;
 	return TRUE;
 }
 
+/**
+* @fn
+* @brief
+* @param	[in]
+* @return
+*/
 BOOL CThread::SetThreadParam(LPVOID lpParameter)
 {
 	if (lpParameter == NULL) {
+		DEBUG_PRINT("ThreadParam is NULL.");
 		return FALSE;
 	}
 	m_lpParameter = lpParameter;
 	return TRUE;
 }
 
+/**
+* @fn
+* @brief
+* @param	[in]
+* @return
+*/
 HANDLE CThread::GetHandle()
 {
 	return m_hThread;
 }
 
+void CThread::clearHandle()
+{
+	m_hThread = NULL;
+}
 
 // *** sample ***
 //DWORD WINAPI MyThreadFunction(LPVOID lpParam)
