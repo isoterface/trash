@@ -15,19 +15,26 @@
 
 
 #define MEM_DUMP(pvoid, n, arr)			mem_dump(pvoid, n, arr, sizeof(arr))
-#define _MEM_DUMP(pvoid, n, arr)		_mem_dump(pvoid, n, arr, sizeof(arr))
-
 #define FMT_STR(arr, fmt, ...)			fmt_str(arr, sizeof(arr), fmt, __VA_ARGS__)
-#define _FMT_STR(arr, fmt, ...)			_fmt_str(arr, sizeof(arr), fmt, __VA_ARGS__)
-
-#define _STR_TIME_NOW(buff)				_str_time_now(buff, sizeof(buff))
-#define _GET_FILENAME(path, buff)		_get_filename(path, buff, sizeof(buff))
+#define STR_TIME_NOW(buff)				str_time_now(buff, sizeof(buff))
+#define GET_FILENAME(path, buff)		get_filename(path, buff, sizeof(buff))
 
 #define DEBUG_PRINT(fmt, ...)			printf("%s: " fmt "\r\n", __FUNCTION__, __VA_ARGS__)
 
 
+int				_mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen);
+const char*		mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen);
+int				_fmt_str(char* szBuff, int n, const char* szFmt, ...);
+const char*		fmt_str(char* szBuff, int n, const char* szFmt, ...);
+int				split_str(const char* szSrc, char* szDelim, char* szDest, int nDest, char* apToken[], int nToken);
+const char*		str_time_now(char* szBuff, int nSize);
+const char*		get_filename(const char* szPath, char* szBuff, int nSize);
+long			get_filesize(const char* szPath);
+int				calc_bcc(void* pData, int nByteLen);
+
+
 /**
- * @fn		mem_dump
+ * @fn		_mem_dump
  * @brief	対象のメモリデータを16進表記で出力先バッファに出力
  * @param	[in]	void* pData		: 対象のデータ
  * @param	[in]	int nByteLe		: 対象のデータの大きさ(バイト単位)
@@ -35,7 +42,7 @@
  * @param	[in]	int nDumpLen	: 出力先バッファ領域の大きさ
  * @return	0:成功, -1:失敗
  */
-int mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
+int _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 {
 	if (pData == NULL || pszDump == NULL || nDumpLen < (nByteLen * 3 + 1)) {
 		return -1;
@@ -55,7 +62,7 @@ int mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 	return 0;
 }
 /**
- * @fn		_mem_dump
+ * @fn		mem_dump
  * @brief	対象のメモリデータを16進表記で出力先バッファに出力
  * @param	[in]	void* pData		: 対象のデータ
  * @param	[in]	int nByteLe		: 対象のデータの大きさ(バイト単位)
@@ -63,9 +70,9 @@ int mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
  * @param	[in]	int nDumpLen	: 出力先バッファ領域の大きさ
  * @return	出力先バッファへのポインタ (失敗時は"(NULL)"文字列が返る)
  */
-const char*  _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
+const char*  mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 {
-	if (mem_dump(pData, nByteLen, pszDump, nDumpLen) < 0) {
+	if (_mem_dump(pData, nByteLen, pszDump, nDumpLen) < 0) {
 		return "(NULL)";
 	}
 	return pszDump;
@@ -73,7 +80,7 @@ const char*  _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 
 
 /**
- * @fn		fmt_str
+ * @fn		_fmt_str
  * @brief	書式と書式パラメータより文字列を作成、出力先バッファに出力
  * @param	[out]	char* szBuff	: 出力先バッファ領域
  * @param	[in]	int n			: 出力先バッファ領域のサイズ
@@ -81,7 +88,7 @@ const char*  _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
  * @param	[in]	...				: 出力書式パラメータ
  * @return	0:成功, -1:失敗
  */
-int fmt_str(char* szBuff, int n, const char* szFmt, ...)
+int _fmt_str(char* szBuff, int n, const char* szFmt, ...)
 {
 	if (szBuff == NULL || szFmt == NULL) {
 		return -1;
@@ -98,7 +105,7 @@ int fmt_str(char* szBuff, int n, const char* szFmt, ...)
 	return 0;
 }
 /**
- * @fn		_fmt_str
+ * @fn		fmt_str
  * @brief	書式と書式パラメータより文字列を作成、出力先バッファに出力
  * @param	[out]	char* szBuff	: 出力先バッファ領域
  * @param	[in]	int n			: 出力先バッファ領域のサイズ
@@ -106,7 +113,7 @@ int fmt_str(char* szBuff, int n, const char* szFmt, ...)
  * @param	[in]	...				: 出力書式パラメータ
  * @return	出力先バッファへのポインタ (失敗時は"(NULL)"文字列が返る)
  */
-const char* _fmt_str(char* szBuff, int n, const char* szFmt, ...)
+const char* fmt_str(char* szBuff, int n, const char* szFmt, ...)
 {
 	if (szBuff == NULL || szFmt == NULL) {
 		return "(NULL)";
@@ -165,13 +172,13 @@ int split_str(const char* szSrc, char* szDelim, char* szDest, int nDest, char* a
 
 
 /**
- * @fn		_str_time_now
+ * @fn		str_time_now
  * @brief	現在日時の文字列を得る
- * @param	[OUT]	char* szBuff	: 日時文字列を格納するバッファ領域
+ * @param	[OUT]	char* szBuff	: 日時文字列を格納するバッファ領域(最低25byte)
  * @param	[IN]	int nSize		: バッファ領域のサイズ
  * @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
  */
-const char* _str_time_now(char* szBuff, int nSize)
+const char* str_time_now(char* szBuff, int nSize)
 {
 	if (szBuff == NULL) {
 		return "(NULL)";
@@ -192,49 +199,67 @@ const char* _str_time_now(char* szBuff, int nSize)
 
 
 /**
-* @fn		_get_filename
-* @brief	フルパスよりファイル名のみを取得
-* @param	[IN]	char* szPath	: ファイルパス文字列
-* @param	[OUT]	char* szBuff	: ファイル名を格納するバッファ領域
-* @param	[IN]	int nSize		: バッファ領域のサイズ
-* @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
-*/
-const char* _get_filename(const char* szPath, char* szBuff, int nSize)
+ * @fn		get_filename
+ * @brief	フルパスよりファイル名のみを取得
+ * @param	[IN]	char* szPath	: ファイルパス文字列
+ * @param	[OUT]	char* szBuff	: ファイル名を格納するバッファ領域
+ * @param	[IN]	int nSize		: バッファ領域のサイズ
+ * @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
+ */
+const char* get_filename(const char* szPath, char* szBuff, int nSize)
 {
 	if (szPath == NULL || szBuff == NULL) {
 		return "(NULL)";
 	}
 
-	char szDrv[MAX_PATH+1];
-	char szDir[MAX_PATH+1];
+	//char szDrv[MAX_PATH+1];
+	//char szDir[MAX_PATH+1];
 	char szFname[MAX_PATH+1];
 	char szExt[MAX_PATH+1];
 
-	_splitpath(szPath, szDrv, szDir, szFname, szExt);
+	//_splitpath(szPath, szDrv, szDir, szFname, szExt);
+	_splitpath(szPath, NULL, NULL, szFname, szExt);
 	snprintf(szBuff, nSize, "%s%s", szFname, szExt);
 
 	return szBuff;
 }
 
+/**
+ * @fn		get_filesize
+ * @brief	ファイルサイズ取得(最大2GB)
+ * @param	[IN]	char* szPath	: ファイルパス文字列
+ * @return	ファイルサイズ
+ */
+long get_filesize(const char* szPath)
+{
+	if (szPath == NULL) {
+		return -1;
+	}
 
-///**
-// * @fn		curr_time
-// * @brief	
-// * @param	
-// * @return	
-// * @remarks	
-// */
-//int curr_time(struct tm* tm)
-//{
-//	time_t t;
-//	time(&t);
-//	if (localtime_s(tm, &t) != 0) {
-//		return -1;
-//	}
-//	return 0;
-//}
+	//errno = 0;
+	FILE *fp = fopen(szPath, "rb");
+	if (fp == NULL) {
+		//if (errno != 0) perror(NULL);
+		return -1;
+	}
+
+	long fsize = _filelength(_fileno(fp));
+
+	if (fclose(fp) != 0) {
+		//if (errno != 0) perror(NULL);
+		return -1;
+	}
+	return fsize;
+}
 
 
+/**
+ * @fn		calc_bcc
+ * @brief	BCC計算
+ * @param	[IN]	void* pData			: 計算対象データへの参照
+ * @param	[IN]	int nByteLen		: 対象データのバイト数
+ * @return	BCC計算値
+ */
 int calc_bcc(void* pData, int nByteLen)
 {
 	if (pData == NULL) {
@@ -255,22 +280,22 @@ int calc_bcc(void* pData, int nByteLen)
 //	char chBuff[256];
 //	int i[] = { 0x12345678, 0x90ABCDEF };
 //	//printf(_mem_dump(i, sizeof(i), chBuff, 256));
-//	printf(_MEM_DUMP(i, sizeof(i), chBuff));
+//	printf(MEM_DUMP(i, sizeof(i), chBuff));
 //	printf("\r\n");
-//	printf(_FMT_STR(chBuff, "%s,%d,%d", "ABC", 1, 2));
+//	printf(FMT_STR(chBuff, "%s,%d,%d", "ABC", 1, 2));
 //
 //	printf("\r\n[");
-//	printf(_fmt_str(NULL, sizeof(chBuff), "%s", "ABC", 1, 2));
+//	printf(fmt_str(NULL, sizeof(chBuff), "%s", "ABC", 1, 2));
 //	printf("]\r\n");
 //
 //	// char* cp = &"";
 //	// printf("aaa:%d,{%s}", *cp, cp);
 //
 //	printf("\r\n[");
-//	printf(_fmt_str(NULL, sizeof(NULL), "%s", "ABC", 1, 2));
+//	printf(fmt_str(NULL, sizeof(NULL), "%s", "ABC", 1, 2));
 //	printf("]\r\n");
 //	printf("\r\n[");
-//	printf(_fmt_str(chBuff, sizeof(chBuff), NULL, "ABC", 1, 2));
+//	printf(fmt_str(chBuff, sizeof(chBuff), NULL, "ABC", 1, 2));
 //	printf("]\r\n");
 //
 //	char* szSrc = "one,two,three,four";

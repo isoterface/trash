@@ -31,10 +31,10 @@ public:
 	~CThread();
 
 	BOOL					SetArgs(LPSECURITY_ATTRIBUTES lpThreadAttributes,
-		DWORD dwStackSize,
-		LPTHREAD_START_ROUTINE lpStartAddress,
-		LPVOID lpParameter,
-		DWORD dwCreationFlags);
+									DWORD dwStackSize,
+									LPTHREAD_START_ROUTINE lpStartAddress,
+									LPVOID lpParameter,
+									DWORD dwCreationFlags);
 	BOOL					SetThreadProc(LPTHREAD_START_ROUTINE lpStartAddress);
 	BOOL					SetThreadParam(LPVOID lpParameter);
 
@@ -72,11 +72,15 @@ CThread::~CThread()
 }
 
 /**
-* @fn
-* @brief
-* @param	[in]
-* @return
-*/
+ * @fn		SetArgs
+ * @brief	スレッドパラメータ設定
+ * @param	[in]	LPSECURITY_ATTRIBUTES lpThreadAttributes	:
+ * @param	[in]	DWORD dwStackSize							:
+ * @param	[in]	LPTHREAD_START_ROUTINE lpStartAddress		:
+ * @param	[in]	LPVOID lpParameter							:
+ * @param	[in]	DWORD dwCreationFlags						:
+ * @return	TRUE:成功, FALSE:失敗
+ */
 BOOL CThread::SetArgs(LPSECURITY_ATTRIBUTES lpThreadAttributes,
 	DWORD dwStackSize,
 	LPTHREAD_START_ROUTINE lpStartAddress,
@@ -98,11 +102,11 @@ BOOL CThread::SetArgs(LPSECURITY_ATTRIBUTES lpThreadAttributes,
 }
 
 /**
-* @fn
-* @brief
-* @param	[in]
-* @return
-*/
+ * @fn		Start
+ * @brief	スレッド開始
+ * @return	TRUE:成功, FALSE:失敗
+ * @remarks	関数内部で CreateThread, ResumeThread を呼んでいます。
+ */
 BOOL CThread::Start()
 {
 	if (m_lpStartAddress == NULL) {
@@ -128,11 +132,13 @@ BOOL CThread::Start()
 }
 
 /**
-* @fn
-* @brief
-* @param	[in]
-* @return
-*/
+ * @fn		Join
+ * @brief	スレッド終了
+ * @param	[in]	DWORD dwWait		: 待ち時間（デフォルト:INFINITE）
+ * @return	TRUE:成功, FALSE:失敗
+ * @remarks 本関数を呼ぶ前にスレッド内部のループを抜けるなどして、終了できるようにしておいてください。
+ * 			関数内部で WaitForSingleObject, CloseHandle を呼んでいます。
+ */
 BOOL CThread::Join(DWORD dwWait/*=INFINITE*/)
 {
 	DWORD dwErr = 0;
@@ -167,11 +173,15 @@ BOOL CThread::Join(DWORD dwWait/*=INFINITE*/)
 }
 
 /**
-* @fn
-* @brief
-* @param	[in]
-* @return
-*/
+ * @fn		JoinAll
+ * @brief	スレッド終了（複数）
+ * @param	[in]	CThread acThread[]			: スレッド処理インスタンスの配列への参照
+ * @param	[in]	int nCount					: インスタンス配列の数
+ * @param	[in]	DWORD dwWait				: 待ち時間（デフォルト:INFINITE）
+ * @return	TRUE:成功, FALSE:失敗
+ * @remarks 本関数を呼ぶ前にスレッド内部のループを抜けるなどして、終了できるようにしておいてください。
+ * 			関数内部で WaitForMultipleObjects, CloseHandle を呼んでいます。
+ */
 BOOL CThread::JoinAll(CThread acThread[], int nCount, DWORD dwWait/*=INFINITE*/)
 {
 	if (acThread == NULL) {
@@ -231,11 +241,21 @@ BOOL CThread::JoinAll(CThread acThread[], int nCount, DWORD dwWait/*=INFINITE*/)
 }
 
 /**
-* @fn
-* @brief
-* @param	[in]
-* @return
-*/
+ * @fn		SetThreadProc
+ * @brief	スレッドインスタンスに処理関数を設定する
+ * @param	[in]	LPTHREAD_START_ROUTINE lpStartAddress	: スレッド処理関数への参照
+ * @return	TRUE:成功, FALSE:失敗
+ * @remarks	関数の形式は以下
+ *      DWORD WINAPI ThreadFunction(LPVOID lpParam)
+ *      {
+ *          内部変数 = (型キャスト)lpParam;
+ *          while (終了条件) {
+ *              *** 反復処理 ***
+ *              Sleep(待機時間);
+ *          }
+ *          return 0;
+ *      }
+ */
 BOOL CThread::SetThreadProc(LPTHREAD_START_ROUTINE lpStartAddress)
 {
 	if (lpStartAddress == NULL) {
@@ -247,11 +267,11 @@ BOOL CThread::SetThreadProc(LPTHREAD_START_ROUTINE lpStartAddress)
 }
 
 /**
-* @fn
-* @brief
-* @param	[in]
-* @return
-*/
+ * @fn		SetThreadParam
+ * @brief	スレッドインスタンスに処理関数の引数を設定する
+ * @param	[in]	LPVOID lpParameter		: 引数への参照
+ * @return	TRUE:成功, FALSE:失敗
+ */
 BOOL CThread::SetThreadParam(LPVOID lpParameter)
 {
 	if (lpParameter == NULL) {
@@ -263,16 +283,20 @@ BOOL CThread::SetThreadParam(LPVOID lpParameter)
 }
 
 /**
-* @fn
-* @brief
-* @param	[in]
-* @return
-*/
+ * @fn		GetHandle
+ * @brief	スレッドのハンドルを取得
+ * @return	HANDLE:スレッドのハンドル, NULL:失敗
+ */
 HANDLE CThread::GetHandle()
 {
 	return m_hThread;
 }
 
+/**
+ * @fn		clearHandle
+ * @brief	スレッドのハンドルを削除する
+ * @remarks	Join, JoinAll から呼ばれます。
+ */
 void CThread::clearHandle()
 {
 	m_hThread = NULL;
@@ -308,4 +332,26 @@ void CThread::clearHandle()
 //	WriteConsole(hStdout, msgBuf, (DWORD)cchStringSize, &dwChars, NULL);
 //
 //	return 0;
+//}
+
+//{
+//	CThread t[8];
+//
+//	LPTHREAD_START_ROUTINE funclist[] = {
+//		&(ThreadFunc_0), &(ThreadFunc_1), &(ThreadFunc_2), &(ThreadFunc_3),
+//		&(ThreadFunc_4), &(ThreadFunc_5), &(ThreadFunc_6), &(ThreadFunc_7)
+//	};
+//
+//	for (int i = 0; i < 8; i++) {
+//		t[i].SetThreadProc(funclist[i]);
+//		isLive[i] = TRUE;
+//		t[i].Start();
+//	}
+//
+//	Sleep(3000);
+//
+//	for (int i = 0; i < 8; i++) {
+//		isLive[i] = FALSE;
+//	}
+//	CThread::JoinAll(t, 8);
 //}
