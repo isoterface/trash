@@ -44,7 +44,7 @@ int				calc_bcc(void* pData, int nByteLen);
  */
 int _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 {
-	if (pData == NULL || pszDump == NULL || nDumpLen < (nByteLen * 3 + 1)) {
+	if (pData == NULL || pszDump == NULL /*|| nDumpLen < (nByteLen * 3 + 1)*/) {
 		return -1;
 	}
 
