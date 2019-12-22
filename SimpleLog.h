@@ -314,6 +314,9 @@ int CLog::write(int nID, int nLevel, const char* szFmt, va_list arg)
 	}
 
 	if (nID < 0 || MAX_ID <= nID || m_bUsed[nID] == FALSE) {
+#if _DEBUG
+		assert(FALSE);
+#endif
 		return -1;
 	}
 
@@ -373,6 +376,9 @@ int CLog::debug(int nID, int nLevel, const char* szFile, int nLine, const char* 
 	}
 
 	if (nID < 0 || MAX_ID <= nID || m_bUsed[nID] == FALSE) {
+#if _DEBUG
+		assert(FALSE);
+#endif
 		return -1;
 	}
 
@@ -481,13 +487,13 @@ int CLog::getId(int nID)
 }
 
 /**
-* @fn		getFilename
-* @brief	フルパスよりファイル名のみを取得
-* @param	[IN]	char* szPath	: ファイルパス文字列
-* @param	[OUT]	char* szBuff	: ファイル名を格納するバッファ領域
-* @param	[IN]	int nSize		: バッファ領域のサイズ
-* @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
-*/
+ * @fn		getFilename
+ * @brief	フルパスよりファイル名のみを取得
+ * @param	[IN]	char* szPath	: ファイルパス文字列
+ * @param	[OUT]	char* szBuff	: ファイル名を格納するバッファ領域
+ * @param	[IN]	int nSize		: バッファ領域のサイズ
+ * @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
+ */
 const char* CLog::getFnameFromPath(const char* szPath, char* szBuff, int nSize)
 {
 	if (szPath == NULL || szBuff == NULL) {

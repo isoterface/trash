@@ -93,7 +93,7 @@ int queue_enqueue(int nID, const unsigned char* pbyData, int nLen)
 int queue_dequeue(int nID, unsigned char* pbyBuff, int nLen)
 {
 	if (pbyBuff == NULL || nID < 0 || MAX_ID <= nID) {
-		return NULL;
+		return -1;
 	}
 
 	lock(nID);
@@ -120,7 +120,7 @@ int queue_dequeue(int nID, unsigned char* pbyBuff, int nLen)
 
 int queue_is_empty()
 {
-	return 0;
+	return ((g_nLength == 0) ? (0) : (-1));
 }
 
 void debug_print()
