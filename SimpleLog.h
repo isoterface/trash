@@ -628,11 +628,11 @@ int CLog::backupFile(int nID)
 		return -1;
 	}
 
-	lock(nID);
+	//lock(nID);
 
 	long fsize = 0;
 	if ((fsize = getFileSize(m_szLogPath[nID])) < 0) {
-		unlock(nID);
+		//unlock(nID);
 		return 0;
 	}
 
@@ -656,7 +656,7 @@ int CLog::backupFile(int nID)
 		}
 	}
 
-	unlock(nID);
+	//unlock(nID);
 	return 0;
 }
 
