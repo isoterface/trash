@@ -15,15 +15,16 @@
 #include <windows.h>
 #include <Shlwapi.h>
 
+
 #define MAX_ID								(5)
 #define MAX_LOG_TEXT						(256)
 #define MAX_FILE_SIZE						(1024)		// 1kByte単位
 #define MAX_LOG_BACKUP						(3)
 
-#define LOG_START(log, path)				log_start(&log, path)
-#define LOG_END(log)						log_end(&log)
-#define LOG_WRITE(log, level, fmt, ...)		log_write(&log, level, fmt, __VA_ARGS__)
-#define LOG_DEBUG(log, level, fmt, ...)		log_debug(&log, level, __FILE__, __LINE__, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOG_START(log, path)				log_start(log, path)
+#define LOG_END(log)						log_end(log)
+#define LOG_WRITE(log, level, fmt, ...)		log_write(log, level, fmt, __VA_ARGS__)
+#define LOG_DEBUG(log, level, fmt, ...)		log_debug(log, level, __FILE__, __LINE__, __FUNCTION__, fmt, __VA_ARGS__)
 
 
  /**
@@ -54,24 +55,21 @@ typedef struct _LOG_INFO {
 	int					nLogBackup;				//! ファイルバックアップ数
 } LOG_INFO;
 
-////! ログ情報の実態の確保
-//static LOG_INFO g_stLog[MAX_ID];
 
-
-int log_start(LOG_INFO* pstLog, const char* szPath);
-int log_end(LOG_INFO* pstLog);
-int log_write(LOG_INFO* pstLog, int nLevel, const char* szFmt, ...);
-int log_debug(LOG_INFO* pstLog, int nLevel, const char* szFile, int nLine, const char* szFunc, const char* szFmt, ...);
-static const char* _log_level(int nLevel);
-static const char* _get_fname_from_path(const char* szPath, char* szBuff, int nSize);
-static void _lock_init(LOG_INFO* pstLog);
-static void _lock_delete(LOG_INFO* pstLog);
-static void _lock(LOG_INFO* pstLog);
-static void _unlock(LOG_INFO* pstLog);
-static int _copy_filepath(LOG_INFO* pstLog, const char* szPath);
-static int _get_backupname(LOG_INFO* pstLog, int nBkNo, char* szBuff, int nSize);
-static int _backup_file(LOG_INFO* pstLog);
-static long _get_filesize(const char* szPath);
+int					log_start(LOG_INFO* pstLog, const char* szPath);
+int					log_end(LOG_INFO* pstLog);
+int					log_write(LOG_INFO* pstLog, int nLevel, const char* szFmt, ...);
+int					log_debug(LOG_INFO* pstLog, int nLevel, const char* szFile, int nLine, const char* szFunc, const char* szFmt, ...);
+static const char*	_log_level(int nLevel);
+static const char*	_get_fname_from_path(const char* szPath, char* szBuff, int nSize);
+static void			_lock_init(LOG_INFO* pstLog);
+static void			_lock_delete(LOG_INFO* pstLog);
+static void			_lock(LOG_INFO* pstLog);
+static void			_unlock(LOG_INFO* pstLog);
+static int			_copy_filepath(LOG_INFO* pstLog, const char* szPath);
+static int			_get_backupname(LOG_INFO* pstLog, int nBkNo, char* szBuff, int nSize);
+static int			_backup_file(LOG_INFO* pstLog);
+static long			_get_filesize(const char* szPath);
 
 
 /**
