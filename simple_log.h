@@ -16,7 +16,7 @@
 #include <Shlwapi.h>
 
 
-#define MAX_ID								(5)
+#define MAX_LOG_ID							(5)
 #define MAX_LOG_TEXT						(256)
 #define MAX_FILE_SIZE						(1024)		// 1kByte単位
 #define MAX_LOG_BACKUP						(3)
@@ -46,13 +46,13 @@ typedef enum _LOG_LEVEL {
 typedef struct _LOG_INFO {
 	CRITICAL_SECTION	stCS;						//! ログIDごとの排他オブジェクト
 	char				szLogPath[MAX_PATH + 1];	//! ログファイルパス
-	BOOL				bUsed;					//! ログID使用状態
-
+	BOOL				bUsed;						//! ログID使用状態
+	// ログバックアップ情報
+	int					nFileSize;					//! ログファイルサイズ
+	int					nLogBackup;					//! ファイルバックアップ数
 	char				szDir[MAX_PATH + 1];		//! ドライブ、ディレクトリ名
-	char				szFname[MAX_PATH + 1];	//! ファイル名（拡張子除去）
+	char				szFname[MAX_PATH + 1];		//! ファイル名（拡張子除去）
 	char				szFext[MAX_PATH + 1];		//! 拡張子名
-	int					nFileSize;				//! ログファイルサイズ
-	int					nLogBackup;				//! ファイルバックアップ数
 } LOG_INFO;
 
 
@@ -62,10 +62,10 @@ int					log_write(LOG_INFO* pstLog, int nLevel, const char* szFmt, ...);
 int					log_debug(LOG_INFO* pstLog, int nLevel, const char* szFile, int nLine, const char* szFunc, const char* szFmt, ...);
 static const char*	_log_level(int nLevel);
 static const char*	_get_fname_from_path(const char* szPath, char* szBuff, int nSize);
-static void			_lock_init(LOG_INFO* pstLog);
-static void			_lock_delete(LOG_INFO* pstLog);
-static void			_lock(LOG_INFO* pstLog);
-static void			_unlock(LOG_INFO* pstLog);
+static void			_log_lock_init(LOG_INFO* pstLog);
+static void			_log_lock_delete(LOG_INFO* pstLog);
+static void			_log_lock(LOG_INFO* pstLog);
+static void			_log_unlock(LOG_INFO* pstLog);
 static int			_copy_filepath(LOG_INFO* pstLog, const char* szPath);
 static int			_get_backupname(LOG_INFO* pstLog, int nBkNo, char* szBuff, int nSize);
 static int			_backup_file(LOG_INFO* pstLog);
@@ -81,7 +81,10 @@ static long			_get_filesize(const char* szPath);
 int log_start(LOG_INFO* pstLog, const char* szPath)
 {
 	if (pstLog == NULL || szPath == NULL) {
+#if _DEBUG
 		assert(FALSE);
+#endif
+		return -1;
 	}
 
 	memset(pstLog->szLogPath, 0, sizeof(pstLog->szLogPath));
@@ -92,7 +95,7 @@ int log_start(LOG_INFO* pstLog, const char* szPath)
 	pstLog->nFileSize = MAX_FILE_SIZE;
 	pstLog->nLogBackup = MAX_LOG_BACKUP;
 
-	_lock_init(pstLog);
+	_log_lock_init(pstLog);
 
 	// ログファイルにバックアップ番号を付与
 	_copy_filepath(pstLog, szPath);
@@ -109,9 +112,12 @@ int log_start(LOG_INFO* pstLog, const char* szPath)
 int log_end(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) {
+#if _DEBUG
 		assert(FALSE);
+#endif
+		return -1;
 	}
-	_lock_delete(pstLog);
+	_log_lock_delete(pstLog);
 	pstLog->bUsed = FALSE;
 	return 0;
 }
@@ -125,13 +131,16 @@ int log_end(LOG_INFO* pstLog)
 int log_write(LOG_INFO* pstLog, int nLevel, const char* szFmt, ...)
 {
 	if (pstLog == NULL || szFmt == NULL || pstLog->bUsed == FALSE) {
+#if _DEBUG
 		assert(FALSE);
+#endif
+		return -1;
 	}
 
 	char szBuff0[MAX_LOG_TEXT];
 	char szBuff1[MAX_LOG_TEXT * 2];
 
-	_lock(pstLog);
+	_log_lock(pstLog);
 	_backup_file(pstLog);
 
 	va_list arg;
@@ -164,10 +173,10 @@ int log_write(LOG_INFO* pstLog, int nLevel, const char* szFmt, ...)
 
 	if (fclose(fp) != 0) {
 		if (errno != 0) perror(NULL);
-		_unlock(pstLog);
+		_log_unlock(pstLog);
 		return -1;
 	}
-	_unlock(pstLog);
+	_log_unlock(pstLog);
 	return 0;
 }
 
@@ -180,10 +189,13 @@ int log_write(LOG_INFO* pstLog, int nLevel, const char* szFmt, ...)
 int log_debug(LOG_INFO* pstLog, int nLevel, const char* szFile, int nLine, const char* szFunc, const char* szFmt, ...)
 {
 	if (pstLog == NULL || szFmt == NULL || szFile == NULL || szFunc == NULL || pstLog->bUsed == FALSE) {
+#if _DEBUG
 		assert(FALSE);
+#endif
+		return -1;
 	}
 
-	_lock(pstLog);
+	_log_lock(pstLog);
 	_backup_file(pstLog);
 
 	char szBuff0[MAX_LOG_TEXT];
@@ -225,10 +237,10 @@ int log_debug(LOG_INFO* pstLog, int nLevel, const char* szFile, int nLine, const
 
 	if (fclose(fp) != 0) {
 		if (errno != 0) perror(NULL);
-		_unlock(pstLog);
+		_log_unlock(pstLog);
 		return -1;
 	}
-	_unlock(pstLog);
+	_log_unlock(pstLog);
 	return 0;
 }
 
@@ -314,7 +326,7 @@ static const char* _get_fname_from_path(const char* szPath, char* szBuff, int nS
 * @brief	排他処理初期化
 * @param	[in]	int nID		 : ログID
 */
-static void _lock_init(LOG_INFO* pstLog)
+static void _log_lock_init(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) { assert(FALSE); }
 	::InitializeCriticalSection(&(pstLog->stCS));
@@ -325,7 +337,7 @@ static void _lock_init(LOG_INFO* pstLog)
 * @brief	排他処理初期化
 * @param	[in]	int nID		 : ログID
 */
-static void _lock_delete(LOG_INFO* pstLog)
+static void _log_lock_delete(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) { assert(FALSE); }
 	::DeleteCriticalSection(&(pstLog->stCS));
@@ -336,7 +348,7 @@ static void _lock_delete(LOG_INFO* pstLog)
 * @brief	排他処理初期化
 * @param	[in]	int nID		 : ログID
 */
-static void _lock(LOG_INFO* pstLog)
+static void _log_lock(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) { assert(FALSE); }
 	::EnterCriticalSection(&(pstLog->stCS));
@@ -347,7 +359,7 @@ static void _lock(LOG_INFO* pstLog)
 * @brief	排他処理初期化
 * @param	[in]	int nID		 : ログID
 */
-static void _unlock(LOG_INFO* pstLog)
+static void _log_unlock(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) { assert(FALSE); }
 	::LeaveCriticalSection(&(pstLog->stCS));
@@ -362,6 +374,9 @@ static void _unlock(LOG_INFO* pstLog)
 static int _copy_filepath(LOG_INFO* pstLog, const char* szPath)
 {
 	if (pstLog == NULL || szPath == NULL) {
+#if _DEBUG
+		assert(FALSE);
+#endif
 		return -1;
 	}
 
@@ -399,7 +414,10 @@ static int _copy_filepath(LOG_INFO* pstLog, const char* szPath)
 static int _get_backupname(LOG_INFO* pstLog, int nBkNo, char* szBuff, int nSize)
 {
 	if (pstLog == NULL || szBuff == NULL || nBkNo < 0 || pstLog->nLogBackup < nBkNo) {
+#if _DEBUG
 		assert(FALSE);
+#endif
+		return -1;
 	}
 	snprintf(szBuff, nSize, "%s%s_%d%s", pstLog->szDir, pstLog->szFname, nBkNo, pstLog->szFext);
 	return 0;
@@ -414,6 +432,9 @@ static int _get_backupname(LOG_INFO* pstLog, int nBkNo, char* szBuff, int nSize)
 static int _backup_file(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) {
+#if _DEBUG
+		assert(FALSE);
+#endif
 		return -1;
 	}
 
@@ -454,6 +475,9 @@ static int _backup_file(LOG_INFO* pstLog)
 static long _get_filesize(const char* szPath)
 {
 	if (szPath == NULL) {
+#if _DEBUG
+		assert(FALSE);
+#endif
 		return -1;
 	}
 

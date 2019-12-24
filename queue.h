@@ -4,10 +4,10 @@
 #include "misc.h"
 
 #define QUEUE_SIZE		(16)		// 2**n
-#define MAX_ID			(1)
+#define MAX_LOG_ID			(1)
 
-static CRITICAL_SECTION g_stCS[MAX_ID];
-static unsigned char g_byQueue[MAX_ID][QUEUE_SIZE];
+static CRITICAL_SECTION g_stCS[MAX_LOG_ID];
+static unsigned char g_byQueue[MAX_LOG_ID][QUEUE_SIZE];
 static int g_nHead = 0;
 static int g_nLength = 0;
 static const int g_nMask = (QUEUE_SIZE - 1);
@@ -28,7 +28,7 @@ void debug_print();
 
 int queue_init(int nID)
 {
-	if (nID < 0 || MAX_ID <= nID) {
+	if (nID < 0 || MAX_LOG_ID <= nID) {
 		return -1;
 	}
 
@@ -40,7 +40,7 @@ int queue_init(int nID)
 
 int queue_end(int nID)
 {
-	if (nID < 0 || MAX_ID <= nID) {
+	if (nID < 0 || MAX_LOG_ID <= nID) {
 		return -1;
 	}
 
@@ -51,7 +51,7 @@ int queue_end(int nID)
 
 int queue_clear(int nID)
 {
-	if (nID < 0 || MAX_ID <= nID) {
+	if (nID < 0 || MAX_LOG_ID <= nID) {
 		return -1;
 	}
 
@@ -64,7 +64,7 @@ int queue_clear(int nID)
 
 int queue_enqueue(int nID, const unsigned char* pbyData, int nLen)
 {
-	if (pbyData == NULL || nID < 0 || MAX_ID <= nID) {
+	if (pbyData == NULL || nID < 0 || MAX_LOG_ID <= nID) {
 		return -1;
 	}
 
@@ -92,7 +92,7 @@ int queue_enqueue(int nID, const unsigned char* pbyData, int nLen)
 
 int queue_dequeue(int nID, unsigned char* pbyBuff, int nLen)
 {
-	if (pbyBuff == NULL || nID < 0 || MAX_ID <= nID) {
+	if (pbyBuff == NULL || nID < 0 || MAX_LOG_ID <= nID) {
 		return -1;
 	}
 
@@ -140,7 +140,7 @@ void debug_print()
  */
 static void lock_init(int nID)
 {
-	if (0 <= nID && nID < MAX_ID) {
+	if (0 <= nID && nID < MAX_LOG_ID) {
 		::InitializeCriticalSection(&(g_stCS[nID]));
 	}
 }
@@ -151,7 +151,7 @@ static void lock_init(int nID)
  */
 static void lock_delete(int nID)
 {
-	if (0 <= nID && nID < MAX_ID) {
+	if (0 <= nID && nID < MAX_LOG_ID) {
 		::DeleteCriticalSection(&(g_stCS[nID]));
 	}
 }
@@ -162,7 +162,7 @@ static void lock_delete(int nID)
  */
 static void lock(int nID)
 {
-	if (0 <= nID && nID < MAX_ID) {
+	if (0 <= nID && nID < MAX_LOG_ID) {
 		::EnterCriticalSection(&(g_stCS[nID]));
 	}
 }
@@ -173,7 +173,7 @@ static void lock(int nID)
  */
 static void unlock(int nID)
 {
-	if (0 <= nID && nID < MAX_ID) {
+	if (0 <= nID && nID < MAX_LOG_ID) {
 		::LeaveCriticalSection(&(g_stCS[nID]));
 	}
 }

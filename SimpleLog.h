@@ -15,7 +15,7 @@
 #include <windows.h>
 #include <Shlwapi.h>
 
-#define MAX_ID								(5)
+#define MAX_LOG_ID								(5)
 #define MAX_LOG_TEXT						(256)
 #define MAX_FILE_SIZE						(1024)		// 1kByte単位
 #define MAX_LOG_BACKUP						(3)
@@ -46,15 +46,15 @@ class CLog
 {
 private:
 	// スタティックメンバ変数（宣言のみ、実体の確保はcpp側で行う）
-	static CRITICAL_SECTION	m_stCS[MAX_ID];						//! ログIDごとの排他オブジェクト
-	static char				m_szLogPath[MAX_ID][MAX_PATH + 1];	//! ログファイルパス
-	static BOOL				m_bUsed[MAX_ID];					//! ログID使用状態
+	static CRITICAL_SECTION	m_stCS[MAX_LOG_ID];						//! ログIDごとの排他オブジェクト
+	static char				m_szLogPath[MAX_LOG_ID][MAX_PATH + 1];	//! ログファイルパス
+	static BOOL				m_bUsed[MAX_LOG_ID];					//! ログID使用状態
 	// ログファイル情報
-	static char				m_szDir[MAX_ID][MAX_PATH + 1];		//! ドライブ、ディレクトリ名
-	static char				m_szFname[MAX_ID][MAX_PATH + 1];	//! ファイル名（拡張子除去）
-	static char				m_szFext[MAX_ID][MAX_PATH + 1];		//! 拡張子名
-	static int				m_nFileSize[MAX_ID];				//! ログファイルサイズ
-	static int				m_nLogBackup[MAX_ID];				//! ファイルバックアップ数
+	static char				m_szDir[MAX_LOG_ID][MAX_PATH + 1];		//! ドライブ、ディレクトリ名
+	static char				m_szFname[MAX_LOG_ID][MAX_PATH + 1];	//! ファイル名（拡張子除去）
+	static char				m_szFext[MAX_LOG_ID][MAX_PATH + 1];		//! 拡張子名
+	static int				m_nFileSize[MAX_LOG_ID];				//! ログファイルサイズ
+	static int				m_nLogBackup[MAX_LOG_ID];				//! ファイルバックアップ数
 
 public:
 	CLog();
@@ -93,26 +93,26 @@ private:
 
 //! スタティックメンバ変数の実体の確保、初期化
 //! ログIDごとの排他オブジェクト
-CRITICAL_SECTION CLog::m_stCS[MAX_ID];
+CRITICAL_SECTION CLog::m_stCS[MAX_LOG_ID];
 //! ログファイルパス
-char CLog::m_szLogPath[MAX_ID][MAX_PATH + 1];
+char CLog::m_szLogPath[MAX_LOG_ID][MAX_PATH + 1];
 //! ログID使用状態
-int CLog::m_bUsed[MAX_ID] = {
+int CLog::m_bUsed[MAX_LOG_ID] = {
 	FALSE, FALSE, FALSE, FALSE, FALSE
 };
 
 //! ドライブ、ディレクトリ名
-char CLog::m_szDir[MAX_ID][MAX_PATH + 1];
+char CLog::m_szDir[MAX_LOG_ID][MAX_PATH + 1];
 //! ファイル名（拡張子除去）
-char CLog::m_szFname[MAX_ID][MAX_PATH + 1];
+char CLog::m_szFname[MAX_LOG_ID][MAX_PATH + 1];
 //! 拡張子名
-char CLog::m_szFext[MAX_ID][MAX_PATH + 1];
+char CLog::m_szFext[MAX_LOG_ID][MAX_PATH + 1];
 //! ログファイルサイズ
-int CLog::m_nFileSize[MAX_ID] = {
+int CLog::m_nFileSize[MAX_LOG_ID] = {
 	MAX_FILE_SIZE, MAX_FILE_SIZE, MAX_FILE_SIZE, MAX_FILE_SIZE, MAX_FILE_SIZE
 };
 //! ファイルバックアップ数
-int CLog::m_nLogBackup[MAX_ID] = {
+int CLog::m_nLogBackup[MAX_LOG_ID] = {
 	MAX_LOG_BACKUP, MAX_LOG_BACKUP, MAX_LOG_BACKUP, MAX_LOG_BACKUP, MAX_LOG_BACKUP
 };
 
@@ -185,7 +185,7 @@ int CLog::Start(const char* szPath)
  */
 int CLog::End(int nID)
 {
-	if (nID < 0 || MAX_ID <= nID) {
+	if (nID < 0 || MAX_LOG_ID <= nID) {
 		return -1;
 	}
 
@@ -207,7 +207,7 @@ int CLog::End(int nID)
 int CLog::End()
 {
 	// 全ID開放
-	for (int i = 0; i < MAX_ID; i++) {
+	for (int i = 0; i < MAX_LOG_ID; i++) {
 		if (m_bUsed[i] == TRUE) {
 			//::DeleteCriticalSection(&(m_stCS[i]));
 			lockDelete(i);
@@ -313,7 +313,7 @@ int CLog::write(int nID, int nLevel, const char* szFmt, va_list arg)
 		return -1;
 	}
 
-	if (nID < 0 || MAX_ID <= nID || m_bUsed[nID] == FALSE) {
+	if (nID < 0 || MAX_LOG_ID <= nID || m_bUsed[nID] == FALSE) {
 #if _DEBUG
 		assert(FALSE);
 #endif
@@ -375,7 +375,7 @@ int CLog::debug(int nID, int nLevel, const char* szFile, int nLine, const char* 
 		return -1;
 	}
 
-	if (nID < 0 || MAX_ID <= nID || m_bUsed[nID] == FALSE) {
+	if (nID < 0 || MAX_LOG_ID <= nID || m_bUsed[nID] == FALSE) {
 #if _DEBUG
 		assert(FALSE);
 #endif
@@ -462,7 +462,7 @@ const char* CLog::logLevel(int nLevel)
  */
 int CLog::getId(int nID)
 {
-	if (nID < -1 || MAX_ID <= nID) {
+	if (nID < -1 || MAX_LOG_ID <= nID) {
 		return -1;
 	}
 
@@ -476,7 +476,7 @@ int CLog::getId(int nID)
 	}
 	else {
 		// -1:空いているIDから検索
-		for (int i = 0; i < MAX_ID; i++) {
+		for (int i = 0; i < MAX_LOG_ID; i++) {
 			if (m_bUsed[i] == FALSE) {
 				id = i;
 				break;
@@ -519,7 +519,7 @@ const char* CLog::getFnameFromPath(const char* szPath, char* szBuff, int nSize)
  */
 inline void CLog::lockInit(int nID)
 {
-	if (0 <= nID && nID < MAX_ID) {
+	if (0 <= nID && nID < MAX_LOG_ID) {
 		::InitializeCriticalSection(&(m_stCS[nID]));
 	}
 }
@@ -531,7 +531,7 @@ inline void CLog::lockInit(int nID)
  */
 inline void CLog::lockDelete(int nID)
 {
-	if (0 <= nID && nID < MAX_ID) {
+	if (0 <= nID && nID < MAX_LOG_ID) {
 		::DeleteCriticalSection(&(m_stCS[nID]));
 	}
 }
@@ -543,7 +543,7 @@ inline void CLog::lockDelete(int nID)
  */
 inline void CLog::lock(int nID)
 {
-	if (0 <= nID && nID < MAX_ID) {
+	if (0 <= nID && nID < MAX_LOG_ID) {
 		::EnterCriticalSection(&(m_stCS[nID]));
 	}
 }
@@ -555,7 +555,7 @@ inline void CLog::lock(int nID)
  */
 inline void CLog::unlock(int nID)
 {
-	if (0 <= nID && nID < MAX_ID) {
+	if (0 <= nID && nID < MAX_LOG_ID) {
 		::LeaveCriticalSection(&(m_stCS[nID]));
 	}
 }
@@ -568,7 +568,7 @@ inline void CLog::unlock(int nID)
  */
 int CLog::copyFilePath(int nID, const char* szPath)
 {
-	if (szPath == NULL || nID < 0 || MAX_ID <= nID) {
+	if (szPath == NULL || nID < 0 || MAX_LOG_ID <= nID) {
 		return -1;
 	}
 
@@ -608,7 +608,7 @@ int CLog::copyFilePath(int nID, const char* szPath)
  */
 int CLog::getBackupName(int nID, int nBkNo, char* szBuff, int nSize)
 {
-	if (szBuff == NULL || nID < 0 || MAX_ID <= nID || nBkNo < 0 || m_nLogBackup[nID] < nBkNo)
+	if (szBuff == NULL || nID < 0 || MAX_LOG_ID <= nID || nBkNo < 0 || m_nLogBackup[nID] < nBkNo)
 	{
 		return -1;
 	}
@@ -624,7 +624,7 @@ int CLog::getBackupName(int nID, int nBkNo, char* szBuff, int nSize)
  */
 int CLog::backupFile(int nID)
 {
-	if (nID < 0 || MAX_ID <= nID) {
+	if (nID < 0 || MAX_LOG_ID <= nID) {
 		return -1;
 	}
 
