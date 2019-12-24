@@ -16,7 +16,6 @@
 #include <Shlwapi.h>
 
 
-#define MAX_LOG_ID							(5)
 #define MAX_LOG_TEXT						(256)
 #define MAX_FILE_SIZE						(1024)		// 1kByte単位
 #define MAX_LOG_BACKUP						(3)
@@ -27,10 +26,10 @@
 #define LOG_DEBUG(log, level, fmt, ...)		log_debug(log, level, __FILE__, __LINE__, __FUNCTION__, fmt, __VA_ARGS__)
 
 
- /**
-  * @enum	_LOG_LEVEL
-  * @brief	ログレベル定義
-  */
+/**
+ * @enum	_LOG_LEVEL
+ * @brief	ログレベル定義
+ */
 typedef enum _LOG_LEVEL {
 	ERR = 1,
 	WAR = 2,
@@ -41,7 +40,7 @@ typedef enum _LOG_LEVEL {
 
 /*
  * @struct	_LOG_INFO
- * @brief		ログ情報
+ * @brief	ログ情報
  */
 typedef struct _LOG_INFO {
 	CRITICAL_SECTION	stCS;						//! ログIDごとの排他オブジェクト
@@ -58,9 +57,9 @@ typedef struct _LOG_INFO {
 
 int					log_start(LOG_INFO* pstLog, const char* szPath);
 int					log_end(LOG_INFO* pstLog);
-int					log_write(LOG_INFO* pstLog, int nLevel, const char* szFmt, ...);
-int					log_debug(LOG_INFO* pstLog, int nLevel, const char* szFile, int nLine, const char* szFunc, const char* szFmt, ...);
-static const char*	_log_level(int nLevel);
+int					log_write(LOG_INFO* pstLog, LOG_LEVEL enLevel, const char* szFmt, ...);
+int					log_debug(LOG_INFO* pstLog, LOG_LEVEL enLevel, const char* szFile, int nLine, const char* szFunc, const char* szFmt, ...);
+static const char*	_log_level(LOG_LEVEL enLevel);
 static const char*	_get_fname_from_path(const char* szPath, char* szBuff, int nSize);
 static void			_log_lock_init(LOG_INFO* pstLog);
 static void			_log_lock_delete(LOG_INFO* pstLog);
@@ -73,11 +72,12 @@ static long			_get_filesize(const char* szPath);
 
 
 /**
-* @fn		End
-* @brief
-* @param	[in]
-* @return
-*/
+ * @fn		log_start
+ * @brief	ログ出力を開始する
+ * @param	[in]	LOG_INFO* pstLog		: ログ情報
+ * @param	[in]	const char* szPath		: ログファイルパス
+ * @return	0:成功, -1:失敗
+ */
 int log_start(LOG_INFO* pstLog, const char* szPath)
 {
 	if (pstLog == NULL || szPath == NULL) {
@@ -104,11 +104,11 @@ int log_start(LOG_INFO* pstLog, const char* szPath)
 }
 
 /**
-* @fn		End
-* @brief
-* @param	[in]
-* @return
-*/
+ * @fn		log_end
+ * @brief	ログ出力を終了する
+ * @param	[in]	LOG_INFO* pstLog		: ログ情報
+ * @return	0:成功, -1:失敗
+ */
 int log_end(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) {
@@ -123,12 +123,15 @@ int log_end(LOG_INFO* pstLog)
 }
 
 /**
-* @fn		write
-* @brief
-* @param	[in]
-* @return
-*/
-int log_write(LOG_INFO* pstLog, int nLevel, const char* szFmt, ...)
+ * @fn		log_write
+ * @brief	ログ出力
+ * @param	[in]	LOG_INFO* pstLog		: ログ情報
+ * @param	[in]	LOG_LEVEL enLevel		: ログレベル
+ * @param	[in]	const char* szFmt		: ログ出力書式
+ * @param	[in]	...						: 出力書式パラメータ
+ * @return	0:成功, -1:失敗
+ */
+int log_write(LOG_INFO* pstLog, LOG_LEVEL enLevel, const char* szFmt, ...)
 {
 	if (pstLog == NULL || szFmt == NULL || pstLog->bUsed == FALSE) {
 #if _DEBUG
@@ -167,7 +170,7 @@ int log_write(LOG_INFO* pstLog, int nLevel, const char* szFmt, ...)
 		, stTime.wMinute
 		, stTime.wSecond
 		, stTime.wMilliseconds
-		, _log_level(nLevel)
+		, _log_level(enLevel)
 		, szBuff0);
 	fputs(szBuff1, fp);
 
@@ -181,12 +184,18 @@ int log_write(LOG_INFO* pstLog, int nLevel, const char* szFmt, ...)
 }
 
 /**
-* @fn		debug
-* @brief
-* @param	[in]
-* @return
-*/
-int log_debug(LOG_INFO* pstLog, int nLevel, const char* szFile, int nLine, const char* szFunc, const char* szFmt, ...)
+ * @fn		log_debug
+ * @brief	ログ出力
+ * @param	[in]	LOG_INFO* pstLog		: ログ情報
+ * @param	[in]	LOG_LEVEL enLevel		: ログレベル
+ * @param	[in]	const char* szFile		: 出力時のファイル名
+ * @param	[in]	int nLine				: 出力時の行数
+ * @param	[in]	const char* szFunc		: 出力時の関数名
+ * @param	[in]	const char* szFmt		: ログ出力書式
+ * @param	[in]	...						: 出力書式パラメータ
+ * @return	0:成功, -1:失敗
+ */
+int log_debug(LOG_INFO* pstLog, LOG_LEVEL enLevel, const char* szFile, int nLine, const char* szFunc, const char* szFmt, ...)
 {
 	if (pstLog == NULL || szFmt == NULL || szFile == NULL || szFunc == NULL || pstLog->bUsed == FALSE) {
 #if _DEBUG
@@ -228,7 +237,7 @@ int log_debug(LOG_INFO* pstLog, int nLevel, const char* szFile, int nLine, const
 		, stTime.wMinute
 		, stTime.wSecond
 		, stTime.wMilliseconds
-		, _log_level(nLevel)
+		, _log_level(enLevel)
 		, _get_fname_from_path(szFile, szFilename, sizeof(szFilename))
 		, nLine
 		, szFunc
@@ -245,14 +254,14 @@ int log_debug(LOG_INFO* pstLog, int nLevel, const char* szFile, int nLine, const
 }
 
 /**
-* @fn		logLevel
-* @brief	ログレベルに対応する名称を取得
-* @param	[in]	int nLevel	: ログレベル(LOG_LEVEL)
-* @return	ログレベル名称
-*/
-static const char* _log_level(int nLevel)
+ * @fn		_log_level
+ * @brief	ログレベルに対応する名称を取得
+ * @param	[in]	LOG_LEVEL enLevel	: ログレベル
+ * @return	ログレベル名称
+ */
+static const char* _log_level(LOG_LEVEL enLevel)
 {
-	switch (nLevel) {
+	switch (enLevel) {
 	case ERR:
 		return "ERR";
 	case WAR:
@@ -266,46 +275,14 @@ static const char* _log_level(int nLevel)
 	}
 }
 
-///**
-//* @fn		getId
-//* @brief	使用可能なログIDを取得する
-//* @param	[in]	int nID		: 使用するログID (-1:で空いているIDを取得)
-//* @return	-1:ログID取得失敗(空き無し), 0～:使用可能なログID
-//*/
-//int CLog::getId(int nID)
-//{
-//	if (nID < -1 || MAX_ID <= nID) {
-//		return -1;
-//	}
-//
-//	int id = -1;
-//
-//	if (0 <= nID) {
-//		// 指定IDは使用可能か
-//		if (m_bUsed[nID] == FALSE) {
-//			id = nID;
-//		}
-//	}
-//	else {
-//		// -1:空いているIDから検索
-//		for (int i = 0; i < MAX_ID; i++) {
-//			if (m_bUsed[i] == FALSE) {
-//				id = i;
-//				break;
-//			}
-//		}
-//	}
-//	return id;
-//}
-
 /**
-* @fn		getFilename
-* @brief	フルパスよりファイル名のみを取得
-* @param	[IN]	char* szPath	: ファイルパス文字列
-* @param	[OUT]	char* szBuff	: ファイル名を格納するバッファ領域
-* @param	[IN]	int nSize		: バッファ領域のサイズ
-* @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
-*/
+ * @fn		_get_fname_from_path
+ * @brief	フルパスよりファイル名のみを取得
+ * @param	[in]	const char* szPath	: ファイルパス文字列
+ * @param	[out]	char* szBuff		: ファイル名を格納するバッファ領域
+ * @param	[in]	int nSize			: バッファ領域のサイズ
+ * @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
+ */
 static const char* _get_fname_from_path(const char* szPath, char* szBuff, int nSize)
 {
 	if (szPath == NULL || szBuff == NULL) {
@@ -322,10 +299,10 @@ static const char* _get_fname_from_path(const char* szPath, char* szBuff, int nS
 }
 
 /**
-* @fn		_LockInit
-* @brief	排他処理初期化
-* @param	[in]	int nID		 : ログID
-*/
+ * @fn		_log_lock_init
+ * @brief	排他処理初期化
+ * @param	[in]	LOG_INFO* pstLog		: ログ情報
+ */
 static void _log_lock_init(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) { assert(FALSE); }
@@ -333,10 +310,10 @@ static void _log_lock_init(LOG_INFO* pstLog)
 }
 
 /**
-* @fn		_LockDelete
-* @brief	排他処理初期化
-* @param	[in]	int nID		 : ログID
-*/
+ * @fn		_log_lock_delete
+ * @brief	排他処理初期化
+ * @param	[in]	LOG_INFO* pstLog		: ログ情報
+ */
 static void _log_lock_delete(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) { assert(FALSE); }
@@ -344,10 +321,10 @@ static void _log_lock_delete(LOG_INFO* pstLog)
 }
 
 /**
-* @fn		_Lock
-* @brief	排他処理初期化
-* @param	[in]	int nID		 : ログID
-*/
+ * @fn		_log_lock
+ * @brief	排他処理初期化
+ * @param	[in]	LOG_INFO* pstLog		: ログ情報
+ */
 static void _log_lock(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) { assert(FALSE); }
@@ -355,10 +332,10 @@ static void _log_lock(LOG_INFO* pstLog)
 }
 
 /**
-* @fn		_Unlock
-* @brief	排他処理初期化
-* @param	[in]	int nID		 : ログID
-*/
+ * @fn		_log_unlock
+ * @brief	排他処理初期化
+ * @param	[in]	LOG_INFO* pstLog		: ログ情報
+ */
 static void _log_unlock(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) { assert(FALSE); }
@@ -366,11 +343,12 @@ static void _log_unlock(LOG_INFO* pstLog)
 }
 
 /**
-* @fn		copyFilePath
-* @brief	指定ログファイル名にバックアップ番号を付与する
-* @param	[in]	int nID				: ログID
-* @param	[in]	const char* szPath	: ログ出力先ファイルパス
-*/
+ * @fn		_copy_filepath
+ * @brief	ログファイルパスを作業用変数にコピー
+ * @param	[in]	LOG_INFO* pstLog		: ログ情報
+ * @param	[in]	const char* szPath		: ログ出力先ファイルパス
+ * @return	0:成功, -1:失敗
+ */
 static int _copy_filepath(LOG_INFO* pstLog, const char* szPath)
 {
 	if (pstLog == NULL || szPath == NULL) {
@@ -403,14 +381,14 @@ static int _copy_filepath(LOG_INFO* pstLog, const char* szPath)
 }
 
 /**
-* @fn		createBackupName
-* @brief	指定ログファイル名にバックアップ番号を付与する
-* @param	[in]	int nID			: ログID
-* @param	[in]	int nBkNo		: バックアップ番号
-* @param	[in]	char* szBuff	: 出力先バッファ領域
-* @param	[in]	int nSize		: バッファ領域のサイズ
-* @return	0:成功, -1:失敗
-*/
+ * @fn		_get_backupname
+ * @brief	指定ログファイル名にバックアップ番号を付与する
+ * @param	[in]	LOG_INFO* pstLog		: ログ情報
+ * @param	[in]	int nBkNo				: バックアップ番号
+ * @param	[out]	char* szBuff			: 出力先バッファ領域
+ * @param	[in]	int nSize				: バッファ領域のサイズ
+ * @return	0:成功, -1:失敗
+ */
 static int _get_backupname(LOG_INFO* pstLog, int nBkNo, char* szBuff, int nSize)
 {
 	if (pstLog == NULL || szBuff == NULL || nBkNo < 0 || pstLog->nLogBackup < nBkNo) {
@@ -424,11 +402,11 @@ static int _get_backupname(LOG_INFO* pstLog, int nBkNo, char* szBuff, int nSize)
 }
 
 /**
-* @fn		backupFile
-* @brief	ログファイルバックアップ処理
-* @param	[in]	int nID		:ログID
-* @return	0:成功, -1:失敗
-*/
+ * @fn		_backup_file
+ * @brief	ログファイルバックアップ処理
+ * @param	[in]	LOG_INFO* pstLog		: ログ情報
+ * @return	0:成功, -1:失敗
+ */
 static int _backup_file(LOG_INFO* pstLog)
 {
 	if (pstLog == NULL) {
@@ -467,11 +445,11 @@ static int _backup_file(LOG_INFO* pstLog)
 }
 
 /**
-* @fn		getFileSize
-* @brief	ファイルサイズ取得(2GBまで)
-* @param	[in]	char* szPath		: ファイルパス
-* @return	ファイルサイズ(-1:失敗)
-*/
+ * @fn		_get_filesize
+ * @brief	ファイルサイズ取得(2GBまで)
+ * @param	[in]	const char* szPath		: ファイルパス
+ * @return	ファイルサイズ(-1:失敗)
+ */
 static long _get_filesize(const char* szPath)
 {
 	if (szPath == NULL) {
