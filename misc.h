@@ -11,6 +11,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <errno.h>
+#include <io.h>
 #include <Windows.h>
 
 
@@ -160,7 +161,8 @@ int split_str(const char* szSrc, char* szDelim, char* szDest, int nDest, char* a
 	tp = strtok(szDest, szDelim);
 	while (tp != NULL) {
 		if (nToken <= cnt) {
-			return -1;
+			//return -1;
+			break;
 		}
 		apToken[cnt] = tp;
 		cnt++;
