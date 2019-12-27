@@ -1,22 +1,36 @@
 #pragma once
 
+#include <stdarg.h>
 #include <Windows.h>
+#include "misc.h"
+
 
 #define RX_BUFF		(1024)		// 受信バッファサイズ
 #define TX_BUFF		(1024)		// 送信バッファサイズ
 
 
-HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int nStopBit);
+typedef struct _SERIAL_INFO {
+	HANDLE hComm;
+	char szPort[16];
+	int nBaud;
+	int nDataBit;
+	int nParity;
+	int nStopBit;
+} SERIAL_INFO;
+
+
+HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int nStopBit, const char* szLogName);
 static void SetDCB(DCB* pDCB);
-int close_serial(HANDLE hComm);
-int clear_serial(HANDLE hComm);
-int serial_send(HANDLE hComm, unsigned char* puchData, int nLength);
-int serial_recv(HANDLE hComm, unsigned char* puchBuff, int nLength, int nTimeout);
+int close_serial(HANDLE hComm, const char* szLogName);
+int clear_serial(HANDLE hComm, const char* szLogName);
+int serial_send(HANDLE hComm, unsigned char* puchData, int nLength, const char* szLogName);
+int serial_recv(HANDLE hComm, unsigned char* puchBuff, int nLength, int nTimeout, const char* szLogName);
 int check_buff_count_rx(HANDLE hComm);
 int check_buff_count_tx(HANDLE hComm);
+static void _com_log_output(const char* szLogName, const char* szFunc, const char* szFmt, ...);
 
 
-HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int nStopBit)
+HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int nStopBit, const char* szLogName)
 {
 	HANDLE hComm;
 
@@ -30,17 +44,20 @@ HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int
 		, NULL);
 
 	if (hComm == INVALID_HANDLE_VALUE) {
+		_com_log_output(szLogName, __FUNCTION__, "CreateFile failed.");
 		return NULL;
 	}
 
 	// 送受信バッファ初期化
 	if (!SetupComm(hComm, RX_BUFF, TX_BUFF)) {
+		_com_log_output(szLogName, __FUNCTION__, "SetupComm failed.");
 		CloseHandle(hComm);
 		return NULL;
 	}
 
 	// 送受信バッファのデータ消去
 	if (!PurgeComm(hComm, (PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_RXCLEAR))) {
+		_com_log_output(szLogName, __FUNCTION__, "PurgeComm failed.");
 		CloseHandle(hComm);
 		return NULL;
 	}
@@ -48,6 +65,7 @@ HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int
 	// 通信条件の設定
 	DCB stDCB;
 	if (!GetCommState(hComm, &stDCB)) {
+		_com_log_output(szLogName, __FUNCTION__, "GetCommState failed.");
 		CloseHandle(hComm);
 		return NULL;
 	}
@@ -58,6 +76,7 @@ HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int
 	stDCB.StopBits = nStopBit;		// ONESTOPBIT;
 
 	if (!SetCommState(hComm, &stDCB)) {
+		_com_log_output(szLogName, __FUNCTION__, "SetCommState failed.");
 		CloseHandle(hComm);
 		return NULL;
 	}
@@ -86,6 +105,7 @@ HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int
 	stCommTimeout.WriteTotalTimeoutConstant = 500;
 
 	if (!SetCommTimeouts(hComm, &stCommTimeout)) {
+		_com_log_output(szLogName, __FUNCTION__, "SetCommTimeouts failed.");
 		CloseHandle(hComm);
 		return NULL;
 	}
@@ -184,3 +204,22 @@ int check_buff_count_tx(HANDLE hComm)
 }
 
 
+static void _com_log_output(const char* szLogName, const char* szFunc, const char* szFmt, ...)
+{
+	char szTime[32];
+	char szOutput[256];
+
+	va_list arg;
+	va_start(arg, szFmt);
+	vsnprintf(szOutput, sizeof(szOutput), szFmt, arg);
+	va_end(arg);
+
+	errno = 0;
+	FILE* fp = fopen(szLogName, "ab+");
+	if (fp == NULL) {
+		//if (errno != 0) perror(NULL);
+		return;
+	}
+	fprintf(fp, "%s, %s, %s", str_time_now(szTime, sizeof(szTime)), szFunc, szOutput);
+	fclose(fp);
+}
