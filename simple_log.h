@@ -30,7 +30,7 @@
  * @enum	_LOG_LEVEL
  * @brief	ƒƒOƒŒƒxƒ‹’è‹`
  */
-typedef enum _LOG_LEVEL {
+typedef enum {
 	ERR = 1,
 	WAR = 2,
 	INF = 3,
