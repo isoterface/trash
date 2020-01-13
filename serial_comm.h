@@ -9,25 +9,15 @@
 #define TX_BUFF		(1024)		// 送信バッファサイズ
 
 
-typedef struct _SERIAL_INFO {
-	HANDLE hComm;
-	char szPort[16];
-	int nBaud;
-	int nDataBit;
-	int nParity;
-	int nStopBit;
-} SERIAL_INFO;
-
-
 HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int nStopBit, const char* szLogName);
 static void SetDCB(DCB* pDCB);
 int close_serial(HANDLE hComm, const char* szLogName);
-int clear_serial(HANDLE hComm, const char* szLogName);
+int clear_serial(HANDLE hComm);
 int serial_send(HANDLE hComm, unsigned char* puchData, int nLength, const char* szLogName);
 int serial_recv(HANDLE hComm, unsigned char* puchBuff, int nLength, int nTimeout, const char* szLogName);
 int check_buff_count_rx(HANDLE hComm);
 int check_buff_count_tx(HANDLE hComm);
-static void _com_log_output(const char* szLogName, const char* szFunc, const char* szFmt, ...);
+static void _com_log_output(const char* szLogName, const char* szFunc, const char* szOutput);
 
 
 HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int nStopBit, const char* szLogName)
@@ -44,20 +34,20 @@ HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int
 		, NULL);
 
 	if (hComm == INVALID_HANDLE_VALUE) {
-		_com_log_output(szLogName, __FUNCTION__, "CreateFile failed.");
+		_com_log_output(szLogName, __FUNCTION__, "CreateFile failed");
 		return NULL;
 	}
 
 	// 送受信バッファ初期化
 	if (!SetupComm(hComm, RX_BUFF, TX_BUFF)) {
-		_com_log_output(szLogName, __FUNCTION__, "SetupComm failed.");
+		_com_log_output(szLogName, __FUNCTION__, "SetupComm failed");
 		CloseHandle(hComm);
 		return NULL;
 	}
 
 	// 送受信バッファのデータ消去
 	if (!PurgeComm(hComm, (PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_RXCLEAR))) {
-		_com_log_output(szLogName, __FUNCTION__, "PurgeComm failed.");
+		_com_log_output(szLogName, __FUNCTION__, "PurgeComm failed");
 		CloseHandle(hComm);
 		return NULL;
 	}
@@ -65,24 +55,24 @@ HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int
 	// 通信条件の設定
 	DCB stDCB;
 	if (!GetCommState(hComm, &stDCB)) {
-		_com_log_output(szLogName, __FUNCTION__, "GetCommState failed.");
+		_com_log_output(szLogName, __FUNCTION__, "GetCommState failed");
 		CloseHandle(hComm);
 		return NULL;
 	}
-
-	stDCB.BaudRate = nBaud;			// 9600;
+	
+	stDCB.BaudRate = nBaud;			// CBR_9600;
 	stDCB.ByteSize = nDataBit;		// 8;
-	stDCB.fParity = nParity;		// NOPARITY;
-	stDCB.StopBits = nStopBit;		// ONESTOPBIT;
+	stDCB.fParity = nParity;		// NOPARITY, ODDPARITY, EVENPARITY
+	stDCB.StopBits = nStopBit;		// ONESTOPBIT, ONE5STOPBITS, TWOSTOPBITS
 
 	if (!SetCommState(hComm, &stDCB)) {
-		_com_log_output(szLogName, __FUNCTION__, "SetCommState failed.");
+		_com_log_output(szLogName, __FUNCTION__, "SetCommState failed");
 		CloseHandle(hComm);
 		return NULL;
 	}
 
 	// タイムアウト時間の設定
-	COMMTIMEOUTS stCommTimeout;
+	COMMTIMEOUTS stCTO;
 	//if (!GetCommTimeouts(hComm, &stCommTO)) {
 	//	CloseHandle(hComm);
 	//	return NULL;
@@ -92,20 +82,20 @@ HANDLE open_serial(const char* szPort, int nBaud, int nDataBit, int nParity, int
 	// ReadIntervalTimeoutに設定する
 	// ReadFile関数で1文字だけ受信する際には効果なし
 	// ゼロに設置すると、受信インターバル時間は使われない
-	stCommTimeout.ReadIntervalTimeout = 500;
+	stCTO.ReadIntervalTimeout = 500;
 	// 受信トータル時間
 	// ReadTotalTimeoutMultiplier * (受信バイト数)+ReadTotalTimeoutConstant
 	// ReadTotalTimeoutMultiplier と ReadTotalTimeoutConstant がゼロのとき、受信トータル時間は使われない
-	stCommTimeout.ReadTotalTimeoutMultiplier = 0;
-	stCommTimeout.ReadTotalTimeoutConstant = 500;
+	stCTO.ReadTotalTimeoutMultiplier = 0;
+	stCTO.ReadTotalTimeoutConstant = 500;
 	// 送信トータル時間
 	// WriteTotalTimeoutMultiplier * (送信バイト数)+WriteTotalTimeoutConstant
 	// WriteTotalTimeoutMultiplier と WriteTotalTimeoutConstant がゼロのとき、送信トータル時間は使われない
-	stCommTimeout.WriteTotalTimeoutMultiplier = 0;
-	stCommTimeout.WriteTotalTimeoutConstant = 500;
+	stCTO.WriteTotalTimeoutMultiplier = 0;
+	stCTO.WriteTotalTimeoutConstant = 500;
 
-	if (!SetCommTimeouts(hComm, &stCommTimeout)) {
-		_com_log_output(szLogName, __FUNCTION__, "SetCommTimeouts failed.");
+	if (!SetCommTimeouts(hComm, &stCTO)) {
+		_com_log_output(szLogName, __FUNCTION__, "SetCommTimeouts failed");
 		CloseHandle(hComm);
 		return NULL;
 	}
@@ -144,9 +134,10 @@ static void SetDCB(DCB* pDCB)
 	pDCB->EvtChar = 0x02;
 }
 
-int close_serial(HANDLE hComm)
+int close_serial(HANDLE hComm, const char* szLogName)
 {
 	if (!CloseHandle(hComm)) {
+		_com_log_output(szLogName, __FUNCTION__, "CloseHandle failed");
 		// TODO:
 		return -1;
 	}
@@ -157,27 +148,32 @@ int clear_serial(HANDLE hComm)
 {
 	// 送受信バッファのデータ消去
 	if (!PurgeComm(hComm, (PURGE_TXABORT | PURGE_RXABORT | PURGE_TXCLEAR | PURGE_RXCLEAR))) {
-		// TODO:
 		return -1;
 	}
 	return 0;
 }
 
-int serial_send(HANDLE hComm, unsigned char* puchData, int nLength)
+int serial_send(HANDLE hComm, unsigned char* puchData, int nLength, const char* szLogName)
 {
 	int nWrite = 0;
 	if (!WriteFile(hComm, puchData, nLength, (LPDWORD)&nWrite, NULL)) {
-		// TODO:
+		_com_log_output(szLogName, __FUNCTION__, "WriteFile failed");
+		return -1;
 	}
+	char szDump[1024];
+	_com_log_output(szLogName, __FUNCTION__, mem_dump(puchData, nLength, szDump, sizeof(szDump)));
 	return nWrite;
 }
 
-int serial_recv(HANDLE hComm, unsigned char* puchBuff, int nLength, int nTimeout)
+int serial_recv(HANDLE hComm, unsigned char* puchBuff, int nLength, int nTimeout, const char* szLogName)
 {
 	int nRead = 0;
-	if (ReadFile(hComm, puchBuff, nLength, (LPDWORD)&nRead, NULL)) {
-		// TODO:
+	if (!ReadFile(hComm, puchBuff, nLength, (LPDWORD)&nRead, NULL)) {
+		_com_log_output(szLogName, __FUNCTION__, "ReadFile failed");
+		return -1;
 	}
+	char szDump[1024];
+	_com_log_output(szLogName, __FUNCTION__, mem_dump(puchBuff, nRead, szDump, sizeof(szDump)));
 	return nRead;
 }
 
@@ -187,7 +183,9 @@ int check_buff_count_rx(HANDLE hComm)
 	int nCount = 0;
 	DWORD dwErrorMask;
 	COMSTAT stComStat;
-	ClearCommError(hComm, &dwErrorMask, &stComStat);
+	if (ClearCommError(hComm, &dwErrorMask, &stComStat) == 0) {
+		return -1;
+	}
 	nCount = (int)stComStat.cbInQue;
 	return nCount;
 }
@@ -198,28 +196,26 @@ int check_buff_count_tx(HANDLE hComm)
 	int nCount = 0;
 	DWORD dwErrorMask;
 	COMSTAT stComStat;
-	ClearCommError(hComm, &dwErrorMask, &stComStat);
+	if (ClearCommError(hComm, &dwErrorMask, &stComStat) == 0) {
+		return -1;
+	}
 	nCount = (int)stComStat.cbOutQue;
 	return nCount;
 }
 
 
-static void _com_log_output(const char* szLogName, const char* szFunc, const char* szFmt, ...)
+static void _com_log_output(const char* szLogName, const char* szFunc, const char* szOutput)
 {
+	if (szLogName == NULL || szFunc == NULL || szOutput == NULL) {
+		return;
+	}
 	char szTime[32];
-	char szOutput[256];
-
-	va_list arg;
-	va_start(arg, szFmt);
-	vsnprintf(szOutput, sizeof(szOutput), szFmt, arg);
-	va_end(arg);
-
-	errno = 0;
+	//errno = 0;
 	FILE* fp = fopen(szLogName, "ab+");
 	if (fp == NULL) {
 		//if (errno != 0) perror(NULL);
 		return;
 	}
-	fprintf(fp, "%s, %s, %s", str_time_now(szTime, sizeof(szTime)), szFunc, szOutput);
+	fprintf(fp, "%s, %s, %s.", str_time_now(szTime, sizeof(szTime)), szFunc, szOutput);
 	fclose(fp);
 }
