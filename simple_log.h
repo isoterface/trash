@@ -20,10 +20,10 @@
 #define MAX_FILE_SIZE						(1024)		// 1kByte’PˆÊ
 #define MAX_LOG_BACKUP						(3)
 
-#define LOG_START(log, path)				log_start(log, path)
-#define LOG_END(log)						log_end(log)
-#define LOG_WRITE(log, level, fmt, ...)		log_write(log, level, fmt, __VA_ARGS__)
-#define LOG_DEBUG(log, level, fmt, ...)		log_debug(log, level, __FILE__, __LINE__, __FUNCTION__, fmt, __VA_ARGS__)
+#define LOG_START(inf, path)				log_start(inf, path)
+#define LOG_END(inf)						log_end(inf)
+#define LOG_WRITE(inf, level, fmt, ...)		log_write(inf, level, fmt, __VA_ARGS__)
+#define LOG_DEBUG(inf, level, fmt, ...)		log_debug(inf, level, __FILE__, __LINE__, __FUNCTION__, fmt, __VA_ARGS__)
 
 
 /**
@@ -416,8 +416,8 @@ static int _backup_file(LOG_INFO* pstLog)
 		return -1;
 	}
 
-	long fsize = 0;
-	if ((fsize = _get_filesize(pstLog->szLogPath)) < 0) {
+	long fsize = _get_filesize(pstLog->szLogPath);
+	if (fsize < 0) {
 		return 0;
 	}
 
