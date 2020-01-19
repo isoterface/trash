@@ -6,6 +6,9 @@
  */
 #pragma once
 
+#pragma warning(push)
+#pragma warning(disable:4996)
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -13,6 +16,15 @@
 #include <errno.h>
 #include <io.h>
 #include <Windows.h>
+#include <tchar.h>
+
+
+#ifndef DISABLE_C4996
+	#define DISABLE_C4996		__pragma(warning(push))	__pragma(warning(disable:4996))
+#endif
+#ifndef ENABLE_C4996
+	#define ENABLE_C4996		__pragma(warning(pop))
+#endif
 
 
 #define MEM_DUMP(pvoid, n, arr)			mem_dump(pvoid, n, arr, sizeof(arr))
@@ -32,7 +44,7 @@
 /*
  * mem_dump2用のアスキーコードデータ
  */
-static const char* g_szAscii[] = {
+static const char* aszAscii[] = {
 	"NUL", "SOH", "STX", "ETX", "EOT", "ENG", "ACK", "BEL", " BS", " HT", " LF", " VT", " FF", " CR", " SO", " SI",
 	"DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB", "CAN", " EM", "SUB", "ESC", " FS", " GS", " RS", " US",
 	" SP", " ! ", " \" ", " # ", " $ ", " % ", " & ", " ' ", " ( ", " ) ", " * ", " + ", " , ", " - ", " . ", " / ",
@@ -65,7 +77,7 @@ long			get_filesize(const char* szPath);
 int				calc_bcc(void* pData, int nByteLen);
 int				calc_lrc(void* pData, int nByteLen);
 int				calc_crc16(void* pData, int nByteLen);
-int				get_error_msg(DWORD dwError, char* szDest, int nDestSize);
+int				get_error_msg(DWORD dwError, LPTSTR lpszDest, int nDestSize);
 
 
 /**
@@ -141,7 +153,7 @@ int _mem_dump2(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 
 	for (int i = 0; i < nByteLen && bp < nDumpLen - 8; i++) {
 		uch = *(p + i);
-		snprintf(buff, sizeof(buff), "%02X[%s] ", uch, g_szAscii[uch]);
+		snprintf(buff, sizeof(buff), "%02X[%s] ", uch, aszAscii[uch]);
 		strncpy(pszDump + bp, buff, strlen(buff));
 		bp += strlen(buff);
 	}
@@ -234,10 +246,10 @@ const char* fmt_str(char* szBuff, int n, const char* szFmt, ...)
  */
 int split_str(const char* szSrc, char* szDelim, char* szDest, int nDest, char* apToken[], int nToken)
 {
-	if (szSrc == NULL || szDelim == NULL || szDest == NULL || apToken == NULL) {
+	if (szSrc == NULL || szDelim == NULL || szDest == NULL || apToken == NULL || nDest < 0) {
 		return -1;
 	}
-	if (nDest <= strlen(szSrc)) {
+	if (nDest <= (int)strlen(szSrc)) {
 		return -1;
 	}
 
@@ -459,12 +471,12 @@ unsigned short CalcCRC16swap(
 }
 
 
-int get_error_msg(DWORD dwError, char* szDest, int nDestSize)
+int get_error_msg(DWORD dwError, LPTSTR lpszDest, int nDestSize)
 {
 	DWORD dwFlasg = FORMAT_MESSAGE_ALLOCATE_BUFFER
 		| FORMAT_MESSAGE_FROM_SYSTEM
 		| FORMAT_MESSAGE_IGNORE_INSERTS;
-	LPSTR lpMsg = NULL;
+	LPTSTR lpMsg = NULL;
 
 	DWORD dwRet = FormatMessage(dwFlasg
 		, NULL
@@ -475,10 +487,10 @@ int get_error_msg(DWORD dwError, char* szDest, int nDestSize)
 		, NULL);
 
 	if (dwRet == 0 || lpMsg == NULL) {
-		strncpy(szDest, "(NULL)", nDestSize);
+		_tcsncpy(lpszDest, _T("(NULL)"), nDestSize);
 	}
 	else {
-		strncpy(szDest, lpMsg, nDestSize);
+		_tcsncpy(lpszDest, lpMsg, nDestSize);
 		LocalFree(lpMsg);
 	}
 	return dwRet;
@@ -544,3 +556,5 @@ int get_error_msg(DWORD dwError, char* szDest, int nDestSize)
 //	//	printf("%s\r\n", ap[i]);
 //	//}
 //}
+
+#pragma warning(pop)
