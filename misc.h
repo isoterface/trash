@@ -107,7 +107,7 @@ int _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 		bp += strlen(buff);
 	}
 	// 出力先バッファにデータが収まりきらない場合は省略表示
-	if (3 < bp && nDumpLen < (nByteLen * 3 + 1)) {
+	if (nDumpLen < (nByteLen * 3 + 1) && 3 <= bp) {
 		strncpy(pszDump + (bp - 3), "...", 3);
 	}
 	return 0;
@@ -158,7 +158,7 @@ int _mem_dump2(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 		bp += strlen(buff);
 	}
 	// 出力先バッファにデータが収まりきらない場合は省略表示
-	if (8 < bp && nDumpLen < (nByteLen * 8 + 1)) {
+	if (nDumpLen < (nByteLen * 8 + 1) && 8 <= bp) {
 		strncpy(pszDump + (bp - 8), "...", 8);
 	}
 	return 0;
