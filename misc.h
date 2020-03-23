@@ -1,11 +1,12 @@
 /**
- * @file	misc.h
- * @brief	雑関数
- * @author	?
- * @date	?
+ * @file		misc.h
+ * @brief		雑関数
+ * @author		?
+ * @date		?
  */
 #pragma once
 
+ // ワーニングC4996抑止開始
 #pragma warning(push)
 #pragma warning(disable:4996)
 
@@ -19,6 +20,7 @@
 #include <tchar.h>
 
 
+ // ワーニングC4996抑止マクロ
 #ifndef DISABLE_C4996
 	#define DISABLE_C4996		__pragma(warning(push))	__pragma(warning(disable:4996))
 #endif
@@ -27,23 +29,29 @@
 #endif
 
 
-#define MEM_DUMP(pvoid, n, arr)			mem_dump(pvoid, n, arr, sizeof(arr))
-#define FMT_STR(arr, fmt, ...)			fmt_str(arr, sizeof(arr), fmt, __VA_ARGS__)
-#define STR_TIME_NOW(buff)				str_time_now(buff, sizeof(buff))
-#define GET_FILENAME(path, buff)		get_filename(path, buff, sizeof(buff))
+////! 対象のメモリデータを16進表記で出力先バッファに出力
+//#define MEM_DUMP(pvoid, n, arr)			mem_dump(pvoid, n, arr, sizeof(arr))
+////! 書式と書式パラメータより文字列を作成、出力先バッファに出力
+//#define FMT_STR(arr, fmt, ...)			fmt_str(arr, sizeof(arr), fmt, __VA_ARGS__)
+////! 現在日時の文字列を得る
+//#define STR_TIME_NOW(buff)				str_time_now(buff, sizeof(buff))
+////! フルパスよりファイル名のみを取得
+//#define GET_FILENAME(path, buff)		get_filename(path, buff, sizeof(buff))
 
-#define HEX2CR(val)						((0xA <= (val)) ? ((val) + 0x31) : ((val) + 0x30))
-#define COUNT_OF_ARRAY(arr, type)		(sizeof(arr)/sizeof(type))
+//! 16進数を対応するアスキー文字へ変換
+#define HEX2CHR(val)					((0xA <= (val)) ? ((val) + 0x31) : ((val) + 0x30))
+//! 配列の要素数を取得
+#define COUNT_OF_ARRAY(arr)				(sizeof(arr)/sizeof(arr[0]))
 
+//! 2の補数を計算
 #define COMPL2(val)						((~(val)) + 1)
 
 #define PRINTLN(fmt, ...)				printf(fmt "\r\n", args);
 
 //#define DEBUG_PRINT(fmt, ...)			printf("%s: " fmt "\r\n", __FUNCTION__, __VA_ARGS__)
 
-/*
- * mem_dump2用のアスキーコードデータ
- */
+
+//! mem_dump2用のアスキーコードデータ
 static const char* aszAscii[] = {
 	"NUL", "SOH", "STX", "ETX", "EOT", "ENG", "ACK", "BEL", " BS", " HT", " LF", " VT", " FF", " CR", " SO", " SI",
 	"DLE", "DC1", "DC2", "DC3", "DC4", "NAK", "SYN", "ETB", "CAN", " EM", "SUB", "ESC", " FS", " GS", " RS", " US",
@@ -81,13 +89,13 @@ int				get_error_msg(DWORD dwError, LPTSTR lpszDest, int nDestSize);
 
 
 /**
- * @fn		_mem_dump
- * @brief	対象のメモリデータを16進表記で出力先バッファに出力
- * @param	[in]	void* pData		: 対象のデータ
- * @param	[in]	int nByteLe		: 対象のデータの大きさ(バイト単位)
- * @param	[out]	char* pszDump	: 出力先バッファ領域
- * @param	[in]	int nDumpLen	: 出力先バッファ領域の大きさ
- * @return	0:成功, -1:失敗
+ * @fn				_mem_dump
+ * @brief			対象のメモリデータを16進表記で出力先バッファに出力
+ * @param[in]		void* pData		: 対象のデータ
+ * @param[in]		int nByteLe		: 対象のデータの大きさ(バイト単位)
+ * @param[in,out]	char* pszDump	: 出力先バッファ領域
+ * @param[in]		int nDumpLen	: 出力先バッファ領域の大きさ
+ * @return			0:成功, -1:失敗
  */
 int _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 {
@@ -113,13 +121,13 @@ int _mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 	return 0;
 }
 /**
- * @fn		mem_dump
- * @brief	対象のメモリデータを16進表記で出力先バッファに出力
- * @param	[in]	void* pData		: 対象のデータ
- * @param	[in]	int nByteLe		: 対象のデータの大きさ(バイト単位)
- * @param	[out]	char* pszDump	: 出力先バッファ領域
- * @param	[in]	int nDumpLen	: 出力先バッファ領域の大きさ
- * @return	出力先バッファへのポインタ (失敗時は"(NULL)"文字列が返る)
+ * @fn				mem_dump
+ * @brief			対象のメモリデータを16進表記で出力先バッファに出力
+ * @param[in]		void* pData		: 対象のデータ
+ * @param[in]		int nByteLe		: 対象のデータの大きさ(バイト単位)
+ * @param[in,out]	char* pszDump	: 出力先バッファ領域
+ * @param[in]		int nDumpLen	: 出力先バッファ領域の大きさ
+ * @return			出力先バッファへのポインタ (失敗時は"(NULL)"文字列が返る)
  */
 const char*  mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 {
@@ -130,13 +138,13 @@ const char*  mem_dump(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 }
 
 /**
- * @fn		_mem_dump2
- * @brief	対象のメモリデータを16進表記で出力先バッファに出力
- * @param	[in]	void* pData		: 対象のデータ
- * @param	[in]	int nByteLe		: 対象のデータの大きさ(バイト単位)
- * @param	[out]	char* pszDump	: 出力先バッファ領域
- * @param	[in]	int nDumpLen	: 出力先バッファ領域の大きさ
- * @return	0:成功, -1:失敗
+ * @fn				_mem_dump2
+ * @brief			対象のメモリデータを16進表記で出力先バッファに出力
+ * @param[in]		void* pData		: 対象のデータ
+ * @param[in]		int nByteLe		: 対象のデータの大きさ(バイト単位)
+ * @param[in,out]	char* pszDump	: 出力先バッファ領域
+ * @param[in]		int nDumpLen	: 出力先バッファ領域の大きさ
+ * @return			0:成功, -1:失敗
  */
 int _mem_dump2(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 {
@@ -164,13 +172,13 @@ int _mem_dump2(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 	return 0;
 }
 /**
- * @fn		mem_dump2
- * @brief	対象のメモリデータを16進表記で出力先バッファに出力
- * @param	[in]	void* pData		: 対象のデータ
- * @param	[in]	int nByteLe		: 対象のデータの大きさ(バイト単位)
- * @param	[out]	char* pszDump	: 出力先バッファ領域
- * @param	[in]	int nDumpLen	: 出力先バッファ領域の大きさ
- * @return	出力先バッファへのポインタ (失敗時は"(NULL)"文字列が返る)
+ * @fn				mem_dump2
+ * @brief			対象のメモリデータを16進表記で出力先バッファに出力
+ * @param[in]		void* pData		: 対象のデータ
+ * @param[in]		int nByteLe		: 対象のデータの大きさ(バイト単位)
+ * @param[in,out]	char* pszDump	: 出力先バッファ領域
+ * @param[in]		int nDumpLen	: 出力先バッファ領域の大きさ
+ * @return			出力先バッファへのポインタ (失敗時は"(NULL)"文字列が返る)
  */
 const char*  mem_dump2(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 {
@@ -181,13 +189,13 @@ const char*  mem_dump2(void* pData, int nByteLen, char* pszDump, int nDumpLen)
 }
 
 /**
- * @fn		_fmt_str
- * @brief	書式と書式パラメータより文字列を作成、出力先バッファに出力
- * @param	[out]	char* szBuff	: 出力先バッファ領域
- * @param	[in]	int n			: 出力先バッファ領域のサイズ
- * @param	[in]	char* szFmt		: 出力書式
- * @param	[in]	...				: 出力書式パラメータ
- * @return	0:成功, -1:失敗
+ * @fn				_fmt_str
+ * @brief			書式と書式パラメータより文字列を作成、出力先バッファに出力
+ * @param[in,out]	char* szBuff	: 出力先バッファ領域
+ * @param[in]		int n			: 出力先バッファ領域のサイズ
+ * @param[in]		char* szFmt		: 出力書式
+ * @param[in]		...				: 出力書式パラメータ
+ * @return			0:成功, -1:失敗
  */
 int _fmt_str(char* szBuff, int n, const char* szFmt, ...)
 {
@@ -206,13 +214,13 @@ int _fmt_str(char* szBuff, int n, const char* szFmt, ...)
 	return 0;
 }
 /**
- * @fn		fmt_str
- * @brief	書式と書式パラメータより文字列を作成、出力先バッファに出力
- * @param	[out]	char* szBuff	: 出力先バッファ領域
- * @param	[in]	int n			: 出力先バッファ領域のサイズ
- * @param	[in]	char* szFmt		: 出力書式
- * @param	[in]	...				: 出力書式パラメータ
- * @return	出力先バッファへのポインタ (失敗時は"(NULL)"文字列が返る)
+ * @fn				fmt_str
+ * @brief			書式と書式パラメータより文字列を作成、出力先バッファに出力
+ * @param[in,out]	char* szBuff	: 出力先バッファ領域
+ * @param[in]		int n			: 出力先バッファ領域のサイズ
+ * @param[in]		char* szFmt		: 出力書式
+ * @param[in]		...				: 出力書式パラメータ
+ * @return			出力先バッファへのポインタ (失敗時は"(NULL)"文字列が返る)
  */
 const char* fmt_str(char* szBuff, int n, const char* szFmt, ...)
 {
@@ -233,16 +241,16 @@ const char* fmt_str(char* szBuff, int n, const char* szFmt, ...)
 
 
 /**
- * @fn		split_str
- * @brief	文字列分割 (分割後のデータおよび各要素へのポインタを返す)
- * @param	[in]	char* szSrc		: 分割する元文字列
- * @param	[in]	char* szDelim	: 区切り文字
- * @param	[out]	char* szDest	: 分割後のデータを出力する領域(区切り文字は'\0'に置き換えられる)
- * @param	[in]	int nDest		: 分割数
- * @param	[out]	char* apToken[]	: 分割後の各要素へのポインタを出力する配列
- * @param	[in]	int nToken		: 分割後の各要素へのポインタを出力する配列のサイズ
- * @return	1～:分割した個数, -1:失敗
- * @remarks	apTokenの各要素はszDestの対応するアドレスを指す, 分割数がnToken以上だと失敗
+ * @fn				split_str
+ * @brief			文字列分割 (分割後のデータおよび各要素へのポインタを返す)
+ * @param[in]		char* szSrc		: 分割する元文字列
+ * @param[in]		char* szDelim	: 区切り文字
+ * @param[in,out]	char* szDest	: 分割後のデータを出力する領域(区切り文字は'\0'に置き換えられる)
+ * @param[in]		int nDest		: 分割数
+ * @param[in,out]	char* apToken[]	: 分割後の各要素へのポインタを出力する配列
+ * @param[in]		int nToken		: 分割後の各要素へのポインタを出力する配列のサイズ
+ * @return			1～:分割した個数, -1:失敗
+ * @remarks			apTokenの各要素はszDestの対応するアドレスを指す, 分割数がnToken以上だと失敗
  */
 int split_str(const char* szSrc, char* szDelim, char* szDest, int nDest, char* apToken[], int nToken)
 {
@@ -274,11 +282,11 @@ int split_str(const char* szSrc, char* szDelim, char* szDest, int nDest, char* a
 
 
 /**
- * @fn		str_time_now
- * @brief	現在日時の文字列を得る
- * @param	[OUT]	char* szBuff	: 日時文字列を格納するバッファ領域(最低25byte)
- * @param	[IN]	int nSize		: バッファ領域のサイズ
- * @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
+ * @fn				str_time_now
+ * @brief			現在日時の文字列を得る
+ * @param[in,out]	char* szBuff	: 日時文字列を格納するバッファ領域(最低25byte)
+ * @param[in]		int nSize		: バッファ領域のサイズ
+ * @return			バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
  */
 const char* str_time_now(char* szBuff, int nSize)
 {
@@ -301,12 +309,12 @@ const char* str_time_now(char* szBuff, int nSize)
 
 
 /**
- * @fn		get_filename
- * @brief	フルパスよりファイル名のみを取得
- * @param	[IN]	char* szPath	: ファイルパス文字列
- * @param	[OUT]	char* szBuff	: ファイル名を格納するバッファ領域
- * @param	[IN]	int nSize		: バッファ領域のサイズ
- * @return	バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
+ * @fn				get_filename
+ * @brief			フルパスよりファイル名のみを取得
+ * @param[in]		char* szPath	: ファイルパス文字列
+ * @param[in,outT]	char* szBuff	: ファイル名を格納するバッファ領域
+ * @param[in]		int nSize		: バッファ領域のサイズ
+ * @return			バッファ領域へのポインタ(処理失敗時は"(NULL)"の文字が返る
  */
 const char* get_filename(const char* szPath, char* szBuff, int nSize)
 {
@@ -327,10 +335,10 @@ const char* get_filename(const char* szPath, char* szBuff, int nSize)
 }
 
 /**
- * @fn		get_filesize
- * @brief	ファイルサイズ取得(最大2GB)
- * @param	[IN]	char* szPath	: ファイルパス文字列
- * @return	ファイルサイズ
+ * @fn			get_filesize
+ * @brief		ファイルサイズ取得(最大2GB)
+ * @param[in]	char* szPath	: ファイルパス文字列
+ * @return		ファイルサイズ
  */
 long get_filesize(const char* szPath)
 {
@@ -356,11 +364,11 @@ long get_filesize(const char* szPath)
 
 
 /**
- * @fn		calc_bcc
- * @brief	BCC計算
- * @param	[IN]	void* pData			: 計算対象データへの参照
- * @param	[IN]	int nByteLen		: 対象データのバイト数
- * @return	BCC計算値
+ * @fn			calc_bcc
+ * @brief		BCC計算
+ * @param[in]	void* pData			: 計算対象データへの参照
+ * @param[in]	int nByteLen		: 対象データのバイト数
+ * @return		BCC計算値
  */
 int calc_bcc(void* pData, int nByteLen)
 {
@@ -471,6 +479,14 @@ unsigned short CalcCRC16swap(
 }
 
 
+/**
+ * @fn				get_error_msg
+ * @brief			GetLastError()の戻り値よりエラーメッセージ文字列を取得
+ * @param[in]		DWORD dwError		: エラーコード
+ * @param[in,out]	LPTSTR lpszDest		: エラーメッセージ出力先バッファ
+ * @param[in]		int nDestSize		: 出力先バッファサイズ
+ * @return			FormatMessage() API関数により出力先バッファに格納されたエラーメッセージの文字数
+ */
 int get_error_msg(DWORD dwError, LPTSTR lpszDest, int nDestSize)
 {
 	DWORD dwFlasg = FORMAT_MESSAGE_ALLOCATE_BUFFER
@@ -478,7 +494,7 @@ int get_error_msg(DWORD dwError, LPTSTR lpszDest, int nDestSize)
 		| FORMAT_MESSAGE_IGNORE_INSERTS;
 	LPTSTR lpMsg = NULL;
 
-	DWORD dwRet = FormatMessage(dwFlasg
+	DWORD dwRet = ::FormatMessage(dwFlasg
 		, NULL
 		, dwError
 		, LANG_USER_DEFAULT
@@ -557,4 +573,5 @@ int get_error_msg(DWORD dwError, LPTSTR lpszDest, int nDestSize)
 //	//}
 //}
 
+// ワーニングC4996抑止終了
 #pragma warning(pop)
